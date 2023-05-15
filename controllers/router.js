@@ -2,8 +2,7 @@
  * Import Module
  ****************/
 const express = require('express'),
-  router = express.Router(),
-  cors = require('cors')
+  router = express.Router()
 
 /*
  * Controller
@@ -13,14 +12,14 @@ const bakerys = require('./bakerys'),
   ratings = require('./ratings'),
   contact = require('./contact'),
   newsletter = require('./newsletter'),
-  regions = require('./regions')
+  favorites = require('./favorites')
 
 /*
  * Router
  ***********/
 
 // Liste des boulangeries
-router.route('/bakerys')
+router.route('/bakerys/:limite')
   .get(bakerys.get)
 router.route('/bakerys-all')
   .get(bakerys.getAll)
@@ -30,7 +29,8 @@ router.route('/bakerys-page-location/:page/:location')
   .get(bakerys.getAllPage2)
 router.route('/bakerys-page-search-location/:page/:search/:location')
   .get(bakerys.getAllPage3)
-
+router.route('/bakery/:url')
+  .get(bakerys.getBakery)
 
 // Liste des articles du blog
 router.route('/blogs')
@@ -54,9 +54,8 @@ router.route('/contact')
 router.route('/newsletter')
   .post(newsletter.post)
 
-// Régions
-router.route('/regions')
-  .get(regions.get)
+router.route('/favorites/:favorites')
+  .get(favorites.get)
 
 // Code postaux
 

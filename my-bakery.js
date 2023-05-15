@@ -17,7 +17,10 @@ const
     throttle = require('express-throttle-bandwidth'),
     port = process.env.SERVER_PORT,
     https = require(`https`),
-    fs = require(`fs`)
+    fs = require(`fs`),
+    CronJob = require('cron').CronJob,
+    { exec } = require('child_process');
+
 
 const options = {
     key: fs.readFileSync(`privkey.pem`),
@@ -136,3 +139,24 @@ https.createServer(options, app).listen(8080);
 app.listen(port, () => {
     console.log(`Ecoute le port ${port}, lancé le : ${new Date().toLocaleString()}`)
 })
+
+var job = new CronJob(
+    '0 5 * * * *',
+    function () {
+
+        exec('pm2 restart 0', (error, stdout, stder) => {
+
+            if (error) {
+                console.error(`error: ${error.message}`);
+                return;
+            }
+
+            console.log(`stdout:\n${stdout}`);
+
+        });
+
+    },
+    null,
+    true,
+    'Europe/Paris'
+);

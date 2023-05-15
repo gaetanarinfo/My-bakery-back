@@ -10,6 +10,8 @@ module.exports = {
     // Method Get
     get: async (req, res) => {
 
+        var limite = req.params.limite
+
         let sql = `SELECT 
         B.*,
         BCS.title AS title_comment, 
@@ -29,7 +31,7 @@ module.exports = {
         LEFT JOIN bakerys_devanture AS BD ON BD.bakery_id = B.id 
         LEFT JOIN bakerys_prix AS BP ON BP.bakery_id = B.id 
         LEFT JOIN bakerys_proprete AS BPE ON BPE.bakery_id = B.id 
-        LEFT JOIN bakerys_choix AS BC ON BC.bakery_id = B.id GROUP BY B.id ORDER BY B.created_at LIMIT 4`;
+        LEFT JOIN bakerys_choix AS BC ON BC.bakery_id = B.id GROUP BY B.id ORDER BY B.created_at LIMIT ${limite}`;
 
         db.query(sql, (error, data, fields) => {
             if (error) console.log(error);
@@ -137,7 +139,7 @@ module.exports = {
             limitation = 9
 
         if (location !== undefined) {
-            where_search += 'WHERE B.adresse LIKE "' + location + '%"'
+            where_search += 'WHERE B.adresse LIKE "' + location + '%" OR B.cp LIKE "' + location + '%" OR B.ville LIKE "' + location + '%"'
             limitation = 2000000000
         }
 
@@ -221,6 +223,42 @@ module.exports = {
                 bakerysAll: data,
             })
         })
+    },
+    getBakery: async (req, res) => {
+
+        var url = req.params.url
+
+        let sql = `SELECT 
+        B.*,
+        BCS.title AS title_comment, 
+        BCS.content AS content_comment, 
+        BCS.author AS author_comment, 
+        BCS.created_at AS created_at_comment,
+        IFNULL(COUNT(BD.id), 0) AS counter_devanture,
+        IFNULL(SUM(BD.note), 0) AS sum_devanture,
+        IFNULL(COUNT(BPE.id), 0) AS counter_proprete,
+        IFNULL(SUM(BPE.note), 0) AS sum_proprete,
+        IFNULL(COUNT(BP.id), 0) AS counter_prix,
+        IFNULL(SUM(BP.note), 0) AS sum_prix,
+        IFNULL(COUNT(BC.id), 0) AS counter_choix,
+        IFNULL(SUM(BC.note), 0) AS sum_choix
+        FROM bakerys AS B 
+        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id
+        LEFT JOIN bakerys_devanture AS BD ON BD.bakery_id = B.id 
+        LEFT JOIN bakerys_prix AS BP ON BP.bakery_id = B.id 
+        LEFT JOIN bakerys_proprete AS BPE ON BPE.bakery_id = B.id 
+        LEFT JOIN bakerys_choix AS BC ON BC.bakery_id = B.id WHERE B.url = "${url}" GROUP BY B.id ORDER BY B.created_at LIMIT 1`;
+
+        db.query(sql, (error, data, fields) => {
+
+            if (error) console.log(error);
+
+            res.json({
+                bakery: data[0],
+            })
+
+        })
+
     },
 
 }
