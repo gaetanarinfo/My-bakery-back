@@ -43,8 +43,6 @@ module.exports = {
 
             } else {
 
-                console.log(email);
-
                 const content = 'Bonjour Gaëtan,<br/><br>';
 
                 const content3 = 'Merci pour votre inscription à notre lettre d\'actualité,<br/><br>';

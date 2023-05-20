@@ -18,9 +18,9 @@ const
     port = process.env.SERVER_PORT,
     https = require(`https`),
     fs = require(`fs`),
-    CronJob = require('cron').CronJob,
-    { exec } = require('child_process');
-
+    cron = require('node-cron'),
+    { exec } = require("child_process"),
+    path = require("path");
 
 const options = {
     key: fs.readFileSync(`privkey.pem`),
@@ -83,7 +83,6 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-const path = require('path')
 app.use(express.static(path.join('./public')))
 
 // Module App gestion des cookies
@@ -140,23 +139,23 @@ app.listen(port, () => {
     console.log(`Ecoute le port ${port}, lancé le : ${new Date().toLocaleString()}`)
 })
 
-var job = new CronJob(
-    '0 5 * * * *',
-    function () {
+cron.schedule('0 1 * * *', () => {
 
-        exec('pm2 restart 0', (error, stdout, stder) => {
+    console.log('Running a job at 01:00 at Europe/Paris timezone');
 
-            if (error) {
-                console.error(`error: ${error.message}`);
-                return;
-            }
+    exec("pm2 restart 0", (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+    })
 
-            console.log(`stdout:\n${stdout}`);
-
-        });
-
-    },
-    null,
-    true,
-    'Europe/Paris'
-);
+}, {
+    scheduled: true,
+    timezone: "Europe/Paris"
+});
