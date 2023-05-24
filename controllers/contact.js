@@ -45,13 +45,13 @@ module.exports = {
 
         const content10 = 'Nous vous remercions de votre confiance.<br/><br/>';
 
-        const content11 = '<img style="width: 30px;" width="30" src="http://my-bakery.fr/logo-light.png"/><br/><br/>';
+        const content11 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
         const content12 = '<a href="https://my-bakery.fr/"></a>My-bakery.fr</a>';
 
         // On configure notre mail à envoyer par nodemailer
         const mailOptions = {
-            from: firstname + ' ' + lastname + ' <' + 'contact@my-bakery.fr' + '>',
-            to: 'My-bakery.fr <contact@my-bakery.fr>',
+            from: firstname + ' ' + lastname + ' <' + email + '>',
+            to: 'My-bakery.fr <' + process.env.USER_MAILER + '>',
             subject: 'Demande de contact sur My Bakery',
             html: content + content2 + content4 + content5 + content6 + content7 + content8 + content9 + content10 + content11 + content12
         }

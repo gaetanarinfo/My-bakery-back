@@ -20,7 +20,7 @@ const
     fs = require(`fs`),
     cron = require('node-cron'),
     { exec } = require("child_process"),
-    path = require("path");
+    path = require("path")
 
 const options = {
     key: fs.readFileSync(`privkey.pem`),
@@ -115,7 +115,9 @@ app.use(ROUTER)
 
 // Page Err 404
 app.use((req, res) => {
-    res.send('Vous n\'avez rien à faire ici ...')
+    if(res.statusCode != 304) res.send('')
+    else if(res.statusCode != 301) res.redirect('https://my-bakery.fr')
+    else res.redirect('https://my-bakery.fr');
 })
 
 // Helmet security pour les failles XSS etc...

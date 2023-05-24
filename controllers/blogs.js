@@ -22,6 +22,44 @@ module.exports = {
                 blogs: data,
             })
         })
+
+    },
+    getBlog: async (req, res) => {
+
+        var url = req.params.url
+
+        let sql = `SELECT B.* 
+        FROM 
+        blogs AS B
+        WHERE B.url = "${url}"
+        ORDER BY B.created_at DESC LIMIT 1`;
+
+        db.query(sql, (error, data, fields) => {
+
+            let sql2 = `SELECT BT.* FROM blogs_tags AS BT WHERE BT.blog_id = "${data[0].id}" ORDER BY BT.id DESC`;
+
+            db.query(sql2, (error2, data2, fields) => {
+
+                if (data2.length >= 1) {
+                    res.json({
+                        tags: data2,
+                        blog: data[0],
+                    })
+                } else {
+                    res.json({
+                        tags: [],
+                        blog: data[0],
+                    })
+                }
+
+                if (error) console.log(error);
+
+            })
+
+            if (error) console.log(error);
+
+
+        })
     },
     getAll: async (req, res) => {
 

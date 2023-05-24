@@ -47,22 +47,21 @@ module.exports = {
 
                 const content3 = 'Merci pour votre inscription à notre lettre d\'actualité,<br/><br>';
 
-                const content2 = 'Récapitulatif des informations :<br/><br>';
+                const content2 = 'Récapitulatif de vos informations :<br/><br>';
 
-                const content6 = 'Votre adreese email : ' + email + '<br/><br/>';
+                const content6 = 'Votre adresse email : ' + email + '<br/><br/>';
 
                 const content10 = 'Nous vous remercions de votre confiance.<br/><br/>';
 
-                const content11 = '<img style="width: 30px;" width="30" src="http://my-bakery.fr/logo-light.png"/><br/><br/>';
+                const content11 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
 
                 const content12 = '<a href="https://my-bakery.fr/"></a>My-bakery.fr</a>';
 
                 // On configure notre mail à envoyer par nodemailer
                 const mailOptions = {
-                    from: 'My-bakery.fr <contact@my-bakery.fr>',
-                    to: 'My-bakery.fr <contact@my-bakery.fr>',
+                    from: 'My-bakery.fr <' + process.env.USER_MAILER + '>',
+                    to: 'My-bakery.fr <' + email + '>',
                     subject: 'Inscription à notre lettre d\'actualité de My Bakery',
-                    cc: email,
                     html: content + content3 + content2 + content6 + content10 + content11 + content12
                 }
 
