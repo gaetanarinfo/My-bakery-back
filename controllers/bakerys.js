@@ -480,4 +480,18 @@ module.exports = {
             })
         })
     },
+    updateView: async (req, res) => {
+
+        var url = req.params.url
+
+        let sql = `SELECT * FROM bakerys WHERE url = "${url}" AND active = 1 LIMIT 1`;
+
+        db.query(sql, (error, data, fields) => {
+
+            var update = `UPDATE bakerys SET views = views + 1 WHERE id = "${data[0].id}"`
+            db.query(update, (error, data, fields) => { console.log(error); })
+
+        })
+
+    }
 }

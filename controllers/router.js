@@ -77,6 +77,8 @@ router.route('/bakery-comment')
   .post(bakerys.postComment)
 router.route('/add-bakery')
   .post(upload.array('file', 4), bakerys.postAddBakery)
+router.route('/bakery-update/:url')
+  .get(bakerys.updateView)
 
 // Liste des articles du blog
 router.route('/blogs/:url')

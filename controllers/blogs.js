@@ -36,6 +36,9 @@ module.exports = {
 
         db.query(sql, (error, data, fields) => {
 
+            var update = `UPDATE blogs SET views = views + 1 WHERE id = "${data[0].id}"`
+            db.query(update, (error, data, fields) => { console.log(error); })
+
             let sql2 = `SELECT BT.* FROM blogs_tags AS BT WHERE BT.blog_id = "${data[0].id}" ORDER BY BT.id DESC`;
 
             db.query(sql2, (error2, data2, fields) => {
