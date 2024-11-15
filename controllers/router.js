@@ -16,6 +16,7 @@ const bakerys = require('./bakerys'),
   favorites = require('./favorites'),
   google_api = require('./apis-google'),
   account = require('./account'),
+  footer = require('/footer'),
   multer = require("multer");
 
 /*
@@ -133,6 +134,10 @@ router.route('/user-profil/:email')
   .get(account.userInfo)
 router.route('/user-activity/:email/:id')
   .get(account.userActivity)
+
+// Footer
+router.route('/villes-france')
+  .get(footer.villesFrance)  
 
 // on export router pour le récupérer dans ../server.js
 module.exports = router;
