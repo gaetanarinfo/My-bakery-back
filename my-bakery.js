@@ -22,10 +22,10 @@ const
     { exec } = require("child_process"),
     path = require("path")
 
-const options = {
-    key: fs.readFileSync(`privkey.pem`),
-    cert: fs.readFileSync(`fullchain.pem`)
-};
+// const options = {
+//     key: fs.readFileSync(`privkey.pem`),
+//     cert: fs.readFileSync(`fullchain.pem`)
+// };
 
 // Helmet aide à sécuriser les applications Express.js en définissant divers en-têtes HTTP. Ce n'est pas un argent
 const helmet = require("helmet")
@@ -134,7 +134,8 @@ app.use(helmet.referrerPolicy());
 app.use(helmet.xssFilter());
 app.disable('x-powered-by');
 
-https.createServer(options, app).listen(8080);
+// https.createServer(options, app).listen(8080);
+https.createServer(app).listen(8080);
 
 // On demande à notre transporter d'envoyer notre mail
 app.listen(port, () => {

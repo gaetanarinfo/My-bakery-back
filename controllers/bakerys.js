@@ -493,5 +493,289 @@ module.exports = {
 
         })
 
+    },
+    updateBakery: async (req, res) => {
+
+        const addName = req.body.addName,
+            url = addName.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+            addAdresse = req.body.addAdresse,
+            addPhone = req.body.addPhone,
+            addHandicap = req.body.addHandicap,
+            addLivraison = req.body.addLivraison,
+            addRestauration = req.body.addRestauration,
+            addSmallContent = req.body.addSmallContent,
+            addWebsite = req.body.addWebsite,
+            addDesc = req.body.addDesc,
+            addId = req.body.addId,
+            addHours1 = req.body.addHours1,
+            addHours2 = req.body.addHours2,
+            addHours3 = req.body.addHours3,
+            addHours4 = req.body.addHours4,
+            addHours5 = req.body.addHours5,
+            addHours6 = req.body.addHours6,
+            addHours7 = req.body.addHours7,
+            userId = req.body.userId
+
+        const image = (req.files[0] !== 'default.jpg') ? req.files[0].filename : 'default.jpg',
+            image2 = (req.files[1] !== 'default2.jpg') ? req.files[1].filename : 'default2.jpg',
+            image3 = (req.files[2] !== 'default.jpg') ? req.files[2].filename : 'default.jpg',
+            image4 = (req.files[3] !== 'default2.jpg') ? req.files[3].filename : 'default2.jpg'
+
+        var update = `UPDATE bakerys SET addName = "${addName}",
+                    addUrl = "${url}",
+                    addAdresse = "${addAdresse}",
+                    addPhone = "${addPhone}",
+                    addHandicap = "${addHandicap}",
+                    addLivraison = "${addLivraison}",
+                    addRestauration = "${addRestauration}",
+                    addSmallContent = "${addSmallContent}",
+                    addWebsite = "${addWebsite}",
+                    addDesc = "${addDesc}",
+                    image = "${image}",
+                    image_2 = "${image2}",
+                    image_3 = "${image3}",
+                    image_4 = "${image4}" WHERE id = ${addId}`
+
+        db.query(update, (error, data, fields) => {
+
+            if (error) {
+                let error = true
+                res.json({
+                    error
+                })
+            };
+
+            let sql = `INSERT INTO bakerys_history_update 
+                (
+                    user_id,
+                    bakery_id,
+                    created_at
+                ) VALUES (
+                    "${userId}",
+                    "${addId}",
+                    "${formatDate(Date())}"
+                    )`;
+
+            db.query(sql, (error2, result2) => {
+            })
+
+            // Mise à jour des heures 1 à 7
+
+            let sqlHours1 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Lundi" LIMIT 1`;
+            db.query(sqlHours1, (error, data, fields) => {
+
+                if (data.length >= 1) {
+
+                    var update = `UPDATE bakerys_hours SET am = "${addHours1}" WHERE bakery_id = "${addId}" AND date = "Lundi"`
+                    db.query(update, (error, data, fields) => { console.log(error); })
+
+                } else {
+
+                    let sql = `INSERT INTO bakerys_hours 
+                (
+                    bakery_id,
+                    date,
+                    am
+                ) VALUES (
+                    "${addId}",
+                    "Lundi",
+                    "${addHours1}"
+                    )`;
+
+                    db.query(sql, (error2, result2) => {
+                    })
+
+                }
+
+            })
+
+            //
+
+            let sqlHours2 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Mardi" LIMIT 1`;
+            db.query(sqlHours2, (error, data, fields) => {
+
+                if (data.length >= 1) {
+
+                    var update = `UPDATE bakerys_hours SET am = "${addHours2}" WHERE bakery_id = "${addId}" AND date = "Mardi"`
+                    db.query(update, (error, data, fields) => { console.log(error); })
+
+                } else {
+
+                    let sql = `INSERT INTO bakerys_hours 
+                (
+                    bakery_id,
+                    date,
+                    am
+                ) VALUES (
+                    "${addId}",
+                    "Mardi",
+                    "${addHours2}"
+                    )`;
+
+                    db.query(sql, (error2, result2) => {
+                    })
+
+                }
+
+            })
+
+            //
+
+            let sqlHours3 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Mercredi" LIMIT 1`;
+            db.query(sqlHours3, (error, data, fields) => {
+
+                if (data.length >= 1) {
+
+                    var update = `UPDATE bakerys_hours SET am = "${addHours3}" WHERE bakery_id = "${addId}" AND date = "Mercredi"`
+                    db.query(update, (error, data, fields) => { console.log(error); })
+
+                } else {
+
+                    let sql = `INSERT INTO bakerys_hours 
+                (
+                    bakery_id,
+                    date,
+                    am
+                ) VALUES (
+                    "${addId}",
+                    "Mercredi",
+                    "${addHours3}"
+                    )`;
+
+                    db.query(sql, (error2, result2) => {
+                    })
+
+                }
+
+            })
+
+            //
+
+            let sqlHours4 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Jeudi" LIMIT 1`;
+            db.query(sqlHours4, (error, data, fields) => {
+
+                if (data.length >= 1) {
+
+                    var update = `UPDATE bakerys_hours SET am = "${addHours4}" WHERE bakery_id = "${addId}" AND date = "Jeudi"`
+                    db.query(update, (error, data, fields) => { console.log(error); })
+
+                } else {
+
+                    let sql = `INSERT INTO bakerys_hours 
+                (
+                    bakery_id,
+                    date,
+                    am
+                ) VALUES (
+                    "${addId}",
+                    "Jeudi",
+                    "${addHours4}"
+                    )`;
+
+                    db.query(sql, (error2, result2) => {
+                    })
+
+                }
+
+            })
+
+            //
+
+            let sqlHours5 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Vendredi" LIMIT 1`;
+            db.query(sqlHours5, (error, data, fields) => {
+
+                if (data.length >= 1) {
+
+                    var update = `UPDATE bakerys_hours SET am = "${addHours5}" WHERE bakery_id = "${addId}" AND date = "Vendredi"`
+                    db.query(update, (error, data, fields) => { console.log(error); })
+
+                } else {
+
+                    let sql = `INSERT INTO bakerys_hours 
+                (
+                    bakery_id,
+                    date,
+                    am
+                ) VALUES (
+                    "${addId}",
+                    "Vendredi",
+                    "${addHours5}"
+                    )`;
+
+                    db.query(sql, (error2, result2) => {
+                    })
+
+                }
+
+            })
+
+            //
+
+            let sqlHours6 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Samedi" LIMIT 1`;
+            db.query(sqlHours6, (error, data, fields) => {
+
+                if (data.length >= 1) {
+
+                    var update = `UPDATE bakerys_hours SET am = "${addHours6}" WHERE bakery_id = "${addId}" AND date = "Samedi"`
+                    db.query(update, (error, data, fields) => { console.log(error); })
+
+                } else {
+
+                    let sql = `INSERT INTO bakerys_hours 
+                (
+                    bakery_id,
+                    date,
+                    am
+                ) VALUES (
+                    "${addId}",
+                    "Samedi",
+                    "${addHours6}"
+                    )`;
+
+                    db.query(sql, (error2, result2) => {
+                    })
+
+                }
+
+            })
+
+            //
+
+            let sqlHours7 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Dimanche" LIMIT 1`;
+            db.query(sqlHours7, (error, data, fields) => {
+
+                if (data.length >= 1) {
+
+                    var update = `UPDATE bakerys_hours SET am = "${addHours7}" WHERE bakery_id = "${addId}" AND date = "Dimanche"`
+                    db.query(update, (error, data, fields) => { console.log(error); })
+
+                } else {
+
+                    let sql = `INSERT INTO bakerys_hours 
+                (
+                    bakery_id,
+                    date,
+                    am
+                ) VALUES (
+                    "${addId}",
+                    "Dimanche",
+                    "${addHours7}"
+                    )`;
+
+                    db.query(sql, (error2, result2) => {
+                    })
+
+                }
+
+            })
+
+            let success = true
+
+            res.send({
+                success
+            })
+
+        })
+
     }
 }

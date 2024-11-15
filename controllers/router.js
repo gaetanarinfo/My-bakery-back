@@ -43,7 +43,7 @@ const upload = multer({
   }
 })
 
-function checkFileType(file, cb) {
+function checkFileType (file, cb) {
   // Allowed ext
   const filetypes = /jpeg|jpg|jpg|png|gif/;
   // Check ext
@@ -79,6 +79,8 @@ router.route('/add-bakery')
   .post(upload.array('file', 4), bakerys.postAddBakery)
 router.route('/bakery-update/:url')
   .get(bakerys.updateView)
+router.route('/update-bakery')
+  .post(upload.array('file', 4), bakerys.updateBakery)
 
 // Liste des articles du blog
 router.route('/blogs/:url')
@@ -127,6 +129,10 @@ router.route('/forgot-password/:token?')
   .post(account.forgot)
 router.route('/forgot-password-token/:token')
   .get(account.tokenForgot)
+router.route('/user-profil/:email')
+  .get(account.userInfo)
+router.route('/user-activity/:email/:id')
+  .get(account.userActivity)
 
 // on export router pour le récupérer dans ../server.js
 module.exports = router;

@@ -21,6 +21,7 @@
     "express-throttle-bandwidth": "^1.0.1",
     "form-data": "^4.0.0",
     "fs": "^0.0.1-security",
+    "generate-password": "^1.7.1",
     "google-search-results-nodejs": "^2.1.0",
     "he": "^1.2.0",
     "helmet": "^5.1.0",
