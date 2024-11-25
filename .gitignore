@@ -6,3 +6,4 @@ cert.pem
 chain.pem
 starter.sh
 /node_modules
+/public/bakerys
