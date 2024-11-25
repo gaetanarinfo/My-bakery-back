@@ -116,8 +116,8 @@ app.use(ROUTER)
 // Page Err 404
 app.use((req, res) => {
     if(res.statusCode != 304) res.send('')
-    else if(res.statusCode != 301) res.redirect('https://my-bakery.fr')
-    else res.redirect('https://my-bakery.fr');
+    else if(res.statusCode != 301) res.redirect('https://My-bakery')
+    else res.redirect('https://My-bakery');
 })
 
 // Helmet security pour les failles XSS etc...

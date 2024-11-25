@@ -55,12 +55,12 @@ module.exports = {
 
                 const content11 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
 
-                const content12 = '<a href="https://my-bakery.fr/"></a>My-bakery.fr</a>';
+                const content12 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
 
                 // On configure notre mail à envoyer par nodemailer
                 const mailOptions = {
-                    from: 'My-bakery.fr <' + process.env.USER_MAILER + '>',
-                    to: 'My-bakery.fr <' + email + '>',
+                    from: 'My bakery <' + process.env.USER_MAILER + '>',
+                    to: 'My-bakery <' + email + '>',
                     subject: 'Inscription à notre lettre d\'actualité de My Bakery',
                     html: content + content3 + content2 + content6 + content10 + content11 + content12
                 }

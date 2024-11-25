@@ -16,14 +16,14 @@ const bakerys = require('./bakerys'),
   favorites = require('./favorites'),
   google_api = require('./apis-google'),
   account = require('./account'),
-  footer = require('/footer'),
+  footer = require('./footer'),
+  products = require('./products'),
+  paypal = require('./paypal'),
   multer = require("multer");
 
 /*
  * Router
  ***********/
-
-// Middlewar login
 
 // set up storage
 const storage = multer.diskStorage({
@@ -126,18 +126,54 @@ router.route('/login')
   .post(account.login)
 router.route('/authenticate/:token')
   .get(account.verification)
-router.route('/forgot-password/:token?')
+router.route('/forgot-password')
   .post(account.forgot)
-router.route('/forgot-password-token/:token')
-  .get(account.tokenForgot)
+router.route('/forgot-password-token')
+  .post(account.tokenForgot)
+router.route('/forgot-verif-password-token/:token')
+  .get(account.tokenVerifForgot)
 router.route('/user-profil/:email')
   .get(account.userInfo)
 router.route('/user-activity/:email/:id')
   .get(account.userActivity)
+router.route('/user-delete/:email/:id')
+  .get(account.userDelete)
+router.route('/user-activity-delete/:email/:id')
+  .get(account.userActivityDelete)
+router.route('/user-orders/:email/:id/:years')
+  .get(account.userOrders)
+router.route('/order-show/:paiementId')
+  .get(account.orderShow)  
+router.route('/user-budgets/:year')
+  .get(account.userBudget)  
 
 // Footer
-router.route('/villes-france')
-  .get(footer.villesFrance)  
+router.route('/villes-france-home')
+  .get(footer.villesFrance)
+
+// Bakerys Department
+router.route('/bakerys-markers/:region')
+  .get(bakerys.bakerysMarkers)
+
+// Products
+router.route('/products')
+  .get(products.allProducts)
+router.route('/products-cart/:cart')
+  .get(products.productsCart)
+
+// Paypal
+
+// create Order route
+router.route('/order-insert')
+  .post(paypal.orderInsert)
+router.route('/paypal/create/:orderId')
+  .get(paypal.create);
+router.route('/order-validate')
+  .post(paypal.succes)
+router.route('/order-cancel')
+  .post(paypal.cancel)
+router.route('/order-refund')
+  .post(paypal.refund)
 
 // on export router pour le récupérer dans ../server.js
 module.exports = router;

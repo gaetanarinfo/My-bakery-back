@@ -10,7 +10,7 @@ module.exports = {
     // Method Get
     villesFrance: async (req, res) => {
 
-        let sql = `SELECT ville_nom_reel FROM villes_france`;
+        let sql = `SELECT * FROM region`;
 
         db.query(sql, (error, data, fields) => {
 
