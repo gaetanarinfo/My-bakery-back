@@ -2,8 +2,6 @@
 fullchain.pem
 privkey.pem
 server.cnf
-cert.pem
-chain.pem
 starter.sh
 /node_modules
-/public/bakerys
+jwt.keys.json

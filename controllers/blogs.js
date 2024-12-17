@@ -11,10 +11,13 @@ module.exports = {
     get: async (req, res) => {
 
         let sql = `SELECT 
-        B.* 
+        B.*,
+        BC.name
         FROM 
         blogs AS B
-        ORDER BY B.created_at DESC LIMIT 6`;
+        LEFT JOIN blogs_categories AS BC ON BC.id = B.categorie
+        WHERE B.active >= 1
+        GROUP BY B.id ORDER BY B.created_at DESC LIMIT 3`;
 
         db.query(sql, (error, data, fields) => {
             if (error) console.log(error);
@@ -28,11 +31,13 @@ module.exports = {
 
         var url = req.params.url
 
-        let sql = `SELECT B.* 
+        let sql = `SELECT B.*, BC.name, BC.id AS categorieId
         FROM 
         blogs AS B
+        LEFT JOIN blogs_categories AS BC ON BC.id = B.categorie
         WHERE B.url = "${url}"
-        ORDER BY B.created_at DESC LIMIT 1`;
+        AND B.active >= 1
+        GROUP BY B.id ORDER BY B.created_at DESC LIMIT 1`;
 
         db.query(sql, (error, data, fields) => {
 
@@ -67,10 +72,13 @@ module.exports = {
     getAll: async (req, res) => {
 
         let sql = `SELECT 
-        B.* 
+        B.*,
+        BC.name 
         FROM 
         blogs AS B
-        ORDER BY B.created_at DESC LIMIT 9`;
+        LEFT JOIN blogs_categories AS BC ON BC.id = B.categorie
+        WHERE B.active >= 1
+        GROUP BY B.id ORDER BY B.created_at DESC LIMIT 9`;
 
         db.query(sql, (error, data, fields) => {
 
@@ -80,16 +88,65 @@ module.exports = {
             B.* 
             FROM 
             blogs AS B
+            WHERE B.active >= 1
             ORDER BY B.created_at DESC`;
 
             db.query(sql2, (error2, data2, fields) => {
 
                 if (error2) console.log(error2);
 
+                let succes = true
+
                 res.json({
+                    succes,
                     blogsAll: data,
                     blogsAllCount: data2.length,
                 })
+            })
+
+        })
+
+    },
+    getCategories: async (req, res) => {
+
+        let sql = `SELECT 
+        BC.*,
+        COUNT(B.categorie) AS counter
+        FROM 
+        blogs_categories AS BC
+        LEFT JOIN blogs AS B ON B.categorie = BC.id
+        GROUP BY BC.id ORDER BY BC.name ASC`;
+
+        db.query(sql, (error, data, fields) => {
+
+            if (error) console.log(error);
+
+            let succes = true
+            res.json({
+                succes,
+                categories: data
+            })
+
+        })
+
+    },
+    getBlogsViews: async (req, res) => {
+
+        let sql = `SELECT 
+        *
+        FROM 
+        blogs
+        WHERE active >= 1
+        ORDER BY views ASC, created_at DESC`;
+
+        db.query(sql, (error, data, fields) => {
+
+            if (error) console.log(error);
+
+            let succes = true
+            res.json({
+                succes,
+                blogsAll: data
             })
 
         })
@@ -107,6 +164,7 @@ module.exports = {
         B.* 
         FROM 
         blogs AS B 
+        WHERE B.active >= 1
         ORDER BY B.created_at DESC LIMIT 9 OFFSET ${final}`;
 
         db.query(sql, (error, data, fields) => {
@@ -118,26 +176,67 @@ module.exports = {
     },
     getSearchAll: async (req, res) => {
 
-        const search = req.params.search
+        const { page, search, categorieId } = req.body
 
-        var where_search = ''
+        console.log(req.body)
 
-        if (search !== undefined) {
-            where_search += 'WHERE B.title LIKE "' + search + '%"'
+        var limitation = 9
+
+        let reqPage = parseInt(page) - 1
+        let pages = parseInt(9)
+        let final = pages * reqPage
+
+        var requete = ''
+
+        if (search != '') {
+            requete += 'AND B.title LIKE "%' + search + '%"'
         }
 
-        let sql = `SELECT 
-        B.* 
-        FROM 
-        blogs AS B 
-        ${where_search}
-        ORDER BY B.created_at DESC LIMIT 9`;
+        if (categorieId !== 0) {
+            requete += `AND B.categorie = "${categorieId}"`
+        }
+
+        console.log(categorieId)
+
+        console.log(requete);
+        
+        let sql = `SELECT B.*, BC.name
+        FROM blogs AS B 
+        LEFT JOIN blogs_categories AS BC ON BC.id = B.categorie
+        WHERE B.active >= 1
+        ${requete}
+        GROUP BY B.id 
+        ORDER BY B.created_at DESC
+        LIMIT ${limitation} OFFSET ${final}
+        `;
 
         db.query(sql, (error, data, fields) => {
+
             if (error) console.log(error);
-            res.json({
-                searchAll: data,
+
+            let sql2 = `SELECT 
+            B.*
+            FROM 
+            blogs AS B
+            WHERE B.active >= 1
+            ${requete}
+            GROUP BY B.id 
+            ORDER BY B.created_at DESC`;
+
+            db.query(sql2, (error2, data2, fields) => {
+
+                if (error2) console.log(error2);
+
+                let succes = true
+                res.json({
+                    succes,
+                    search: data,
+                    blogsAllCount: data2.length,
+                })
+
             })
+
         })
+
     },
 }

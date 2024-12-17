@@ -1,26 +1,12 @@
 /*
  * Import Module
  ****************/
-const axios = require('axios')
+const axios = require('axios'),
+    moment = require('moment'),
+    qs = require('qs'),
+    fs = require('fs')
 
-function formatDate (date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear(),
-        hour = d.getUTCHours() + 2,
-        minute = d.getUTCMinutes(),
-        seconde = d.getUTCSeconds()
-
-    if (month.length < 2)
-        month = '0' + month;
-    if (day.length < 2)
-        day = '0' + day;
-
-    var formatDate = year + '-' + month + '-' + day
-
-    return [formatDate + ' ' + hour + ':' + minute + ':' + seconde];
-}
+moment.locale('fr')
 
 /*
  * Controller
@@ -37,9 +23,11 @@ module.exports = {
         BCS.author AS author_comment, 
         BCS.created_at AS created_at_comment
         FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.active = 1 GROUP BY B.id ORDER BY B.id DESC LIMIT ${limite}`;
+        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id 
+        WHERE B.active = 1 GROUP BY B.id ORDER BY B.highlighting_at DESC, B.id DESC LIMIT ${limite}`;
 
         db.query(sql, (error, data, fields) => {
+
             if (error) console.log(error);
             res.json({
                 bakerys: data,
@@ -54,7 +42,7 @@ module.exports = {
         BCS.author AS author_comment, 
         BCS.created_at AS created_at_comment
         FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.active = 1 GROUP BY B.id ORDER BY B.id DESC LIMIT 9`;
+        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.active = 1 GROUP BY B.id ORDER BY B.highlighting_at DESC, B.id DESC LIMIT 9`;
 
         db.query(sql, (error, data, fields) => {
 
@@ -65,13 +53,15 @@ module.exports = {
             FROM 
             bakerys AS B
             WHERE B.active = 1 
-            ORDER BY B.id DESC`;
+            ORDER BY B.highlighting_at DESC, B.id DESC`;
 
             db.query(sql2, (error2, data2, fields) => {
 
                 if (error2) console.log(error2);
 
+                let succes = true
                 res.json({
+                    succes,
                     bakerysAll: data,
                     bakerysAllCount: data2.length,
                 })
@@ -82,57 +72,103 @@ module.exports = {
     },
     getAllPage: async (req, res) => {
 
-        const search = req.params.search
+        const { page, search, location, postalCode, prix, devanture, choix, proprete } = req.body
+
+        var limitation = 9
+
+        let reqPage = parseInt(page) - 1
+        let pages = parseInt(9)
+        let final = pages * reqPage
+
+        var requete = ''
+
+        if (prix >= 1) {
+            requete += 'AND BP.note <= ROUND((BP.note * ' + (prix) + ' / B.counter_prix), 1)'
+        }
+
+        if (devanture >= 1) {
+            requete += 'AND BD.note <= ROUND((BD.note * ' + (devanture) + ' / B.counter_devanture), 1)'
+        }
+
+        if (choix >= 1) {
+            requete += 'AND BC.note <= ROUND((BC.note * ' + (choix) + ' / B.counter_choix), 1)'
+        }
+
+        if (proprete >= 1) {
+            requete += 'AND BPP.note <= ROUND((BPP.note * ' + (proprete) + ' / B.counter_proprete), 1)'
+        }
+
+        if(search) {
+            requete += 'AND B.title LIKE "%' + search + '%" '
+        }
+
+        if(location) {
+            requete += 'AND B.adresse LIKE "%' + location + '%" '
+        }
+
+        if(postalCode) {
+            requete += 'AND B.postcode LIKE "%' + postalCode + '%" '
+        }
+
 
         let sql = `SELECT B.*,
         BCS.content AS content_comment, 
         BCS.author AS author_comment, 
-        BCS.created_at AS created_at_comment
+        BCS.created_at AS created_at_comment,
+        B.counter_prix,
+        BP.note,
+        BD.note,
+        BC.note,
+        BPP.note
         FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.title LIKE "%${search}%" AND B.active = 1  GROUP BY B.id ORDER BY B.id DESC`;
+        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id 
+        LEFT JOIN bakerys_prix AS BP ON BP.bakery_id = B.id 
+        LEFT JOIN bakerys_devanture AS BD ON BD.bakery_id = B.id 
+        LEFT JOIN bakerys_choix AS BC ON BC.bakery_id = B.id 
+        LEFT JOIN bakerys_proprete AS BPP ON BPP.bakery_id = B.id 
+        WHERE B.active = 1
+        ${requete}
+        GROUP BY B.id 
+        ORDER BY B.highlighting_at DESC, B.id DESC
+        LIMIT ${limitation} OFFSET ${final}
+        `;
 
         db.query(sql, (error, data, fields) => {
+
             if (error) console.log(error);
-            res.json({
-                bakerysAll: data,
+
+            let sql2 = `SELECT 
+            B.*,
+            B.counter_prix,
+            BP.note,
+            BD.note,
+            BC.note,
+            BPP.note
+            FROM 
+            bakerys AS B
+            LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id 
+            LEFT JOIN bakerys_prix AS BP ON BP.bakery_id = B.id 
+            LEFT JOIN bakerys_devanture AS BD ON BD.bakery_id = B.id 
+            LEFT JOIN bakerys_choix AS BC ON BC.bakery_id = B.id 
+            LEFT JOIN bakerys_proprete AS BPP ON BPP.bakery_id = B.id 
+            WHERE B.active = 1
+            ${requete}
+            GROUP BY B.id 
+            ORDER BY B.highlighting_at DESC, B.id DESC`;
+
+            db.query(sql2, (error2, data2, fields) => {
+
+                if (error2) console.log(error2);
+
+                let succes = true
+                res.json({
+                    succes,
+                    search: data,
+                    bakerysAllCount: data2.length,
+                })
+
             })
-        })
-    },
-    getAllPage2: async (req, res) => {
 
-        const location = req.params.location
-
-        let sql = `SELECT B.*,
-        BCS.content AS content_comment, 
-        BCS.author AS author_comment, 
-        BCS.created_at AS created_at_comment
-        FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.adresse LIKE "%${location}%" AND B.active = 1 GROUP BY B.id ORDER BY B.id DESC`;
-
-        db.query(sql, (error, data, fields) => {
-            if (error) console.log(error);
-            res.json({
-                bakerysAll: data,
-            })
-        })
-    },
-    getAllPage3: async (req, res) => {
-
-        const search = req.params.search,
-            location = req.params.location
-
-        let sql = `SELECT B.*,
-        BCS.content AS content_comment, 
-        BCS.author AS author_comment, 
-        BCS.created_at AS created_at_comment
-        FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.title LIKE "%${search}%" AND B.active = 1 AND B.adresse LIKE "%${location}%" GROUP BY B.id ORDER BY B.id DESC`;
-
-        db.query(sql, (error, data, fields) => {
-            if (error) console.log(error);
-            res.json({
-                bakerysAll: data,
-            })
         })
     },
     getBakery: async (req, res) => {
@@ -145,19 +181,21 @@ module.exports = {
         BCS.author AS author_comment, 
         BCS.created_at AS created_at_comment
         FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.url = "${url}" AND B.active = 1 GROUP BY B.id ORDER BY B.id DESC LIMIT 1`;
+        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.url = "${url}" AND B.active = 1 GROUP BY B.id ORDER BY B.highlighting_at DESC, B.id DESC LIMIT 1`;
 
         db.query(sql, (error, data, fields) => {
 
             if (error) console.log(error);
 
-            let sql = `SELECT BC.* FROM bakerys_comments AS BC WHERE BC.bakery_id = "${data[0].id}" ORDER BY BC.created_at DESC`;
+            var ids = (data.length >= 1) ? data[0].id : 0
+
+            let sql = `SELECT BC.* FROM bakerys_comments AS BC WHERE BC.bakery_id = "${ids}" ORDER BY BC.created_at DESC`;
 
             db.query(sql, (error2, data2, fields) => {
 
                 if (error2) console.log(error2);
 
-                let sql = `SELECT BH.* FROM bakerys_hours AS BH WHERE BH.bakery_id = "${data[0].id}" ORDER BY BH.id ASC`;
+                let sql = `SELECT BH.* FROM bakerys_hours AS BH WHERE BH.bakery_id = "${ids}" ORDER BY BH.id ASC`;
 
                 db.query(sql, (error3, data3, fields) => {
 
@@ -180,7 +218,7 @@ module.exports = {
     postComment: async (req, res) => {
 
         const email = req.body.email,
-            ip = req.ip.replace('::ffff:', ''),
+            ip = req.body.ip,
             url = req.body.url,
             devanture = req.body.devanture,
             prix = req.body.prix,
@@ -189,12 +227,11 @@ module.exports = {
             author = req.body.author,
             comment = req.body.comment
 
-
         let verif_bakery = `SELECT url, id FROM bakerys WHERE active = 1 AND url = "${url}"`;
 
         db.query(verif_bakery, (error, data, fields) => {
 
-            if (data[0] != undefined) {
+            if (data.length >= 1) {
 
                 let sql = `INSERT INTO bakerys_comments (bakery_id,ip,email,author,content) VALUES ("${data[0].id}", "${ip}", "${email}", "${author}", "${comment}")`;
 
@@ -260,10 +297,10 @@ module.exports = {
 
                     })
 
-                    let success = true
+                    let succes = true
 
                     res.send({
-                        success
+                        succes
                     })
 
                 })
@@ -283,13 +320,13 @@ module.exports = {
     },
     postAddBakery: async (req, res) => {
 
-        const ip = req.ip.replace('::ffff:', ''),
+        const ip = req.body.ip,
             image = (req.files[0] !== undefined) ? req.files[0].filename : 'default.jpg',
             image2 = (req.files[1] !== undefined) ? req.files[1].filename : 'default2.jpg',
             image3 = (req.files[2] !== undefined) ? req.files[2].filename : 'default.jpg',
             image4 = (req.files[3] !== undefined) ? req.files[3].filename : 'default2.jpg',
             addName = req.body.addName,
-            url = addName.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+            url = addName.toLowerCase().replaceAll('â', 'a').replaceAll('é', 'e').replaceAll('à', 'a').replaceAll(' - ', '-').replaceAll('\'', '-').replaceAll(' ', '-').replaceAll('’', '-').replaceAll('%', '-pourcent-').replaceAll('è', 'e').replaceAll('ï', 'i').replaceAll(',', '').replaceAll('/', '').replaceAll('--', '-').replaceAll('ô', 'o').replaceAll('ê', 'e').replaceAll('ë', 'e').replaceAll('ö', 'o'),
             addAdresse = req.body.addAdresse,
             addPhone = req.body.addPhone,
             addHandicap = req.body.addHandicap,
@@ -297,7 +334,15 @@ module.exports = {
             addRestauration = req.body.addRestauration,
             addSmallContent = req.body.addSmallContent,
             addWebsite = req.body.addWebsite,
-            addDesc = req.body.addDesc
+            addDesc = req.body.addDesc,
+            addNote = req.body.addNote,
+            addTotalNote = req.body.addTotalNote,
+            pays = req.body.pays,
+            pays_code = req.body.pays_code,
+            departement = req.body.departement,
+            ville = req.body.ville,
+            postcode = req.body.postcode,
+            department_code = req.body.department_code
 
         const config = {
             method: 'get',
@@ -322,13 +367,21 @@ module.exports = {
                         image_4,
                         phone,
                         adresse,
+                        pays,
+                        pays_code,
+                        departement,
+                        ville,
+                        postcode,
+                        department_code,
                         lat,
                         lng,
                         handicape,
                         website,
                         delivery,
                         dine_in,
-                        ip
+                        ip,
+                        user_rating_google,
+                        total_rating_google
                     ) VALUES (
                         "${addName}",
                         "${url}",
@@ -340,13 +393,21 @@ module.exports = {
                         "${image4}",
                         "${addPhone}",
                         "${addAdresse}",
+                        "${pays}",
+                        "${pays_code}",
+                        "${departement}",
+                        "${ville}",
+                        "${postcode}",
+                        "${department_code}",
                         "${lat}",
                         "${lng}",
                         "${addHandicap}",
                         "${addWebsite}",
                         "${addLivraison}",
                         "${addRestauration}",
-                        "${ip}"
+                        "${ip}",
+                        "${addTotalNote}",
+                        "${addNote}"
                         )`;
 
                 db.query(sql, (error, result) => {
@@ -463,6 +524,33 @@ module.exports = {
                         db.query(sql7, (error2, result2) => {
                         })
 
+                        let dataWonder = qs.stringify({
+                            'accessToken': process.env.WONDERPUSH_KEY,
+                            'targetSegmentIds': '@ALL',
+                            'notification': '{"alert":{"title": "My Bakery 🤗🥖", "targetUrl": "https://my-bakery.fr/bakery/' + url + '", "text":"Bonjour, une nouvelle boulangerie a été ajoutée, venez vite la découvrir"}}'
+                        });
+
+                        let config = {
+                            method: 'post',
+                            maxBodyLength: Infinity,
+                            url: 'https://management-api.wonderpush.com/v1/deliveries',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            data: dataWonder
+                        };
+
+                        axios.request(config)
+                            .then((response) => {
+
+                                if (response.status === 202) {
+
+                                }
+
+                            }).catch(error => {
+                                console.log(error);
+                            })
+
                         res.send({
                             success
                         })
@@ -491,7 +579,7 @@ module.exports = {
         BCS.author AS author_comment, 
         BCS.created_at AS created_at_comment
         FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.active = 1 GROUP BY B.id ORDER BY B.id DESC LIMIT ${limitation} OFFSET ${final}`;
+        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.active = 1 GROUP BY B.id ORDER BY B.highlighting_at DESC, B.id DESC LIMIT ${limitation} OFFSET ${final}`;
 
         db.query(sql, (error, data, fields) => {
             if (error) console.log(error);
@@ -502,22 +590,40 @@ module.exports = {
     },
     updateView: async (req, res) => {
 
-        var url = req.params.url
+        const { bakeryId, ip } = req.body
 
-        let sql = `SELECT * FROM bakerys WHERE url = "${url}" AND active = 1 LIMIT 1`;
+        let sql = `SELECT * FROM bakerys_views WHERE bakery_id = ${bakeryId} AND ip = "${ip}" AND created_at = "${moment().format('YYYY-MM-DD')}"`;
 
-        db.query(sql, (error, data, fields) => {
+        db.query(sql, (errors, data, fields) => {
 
-            var update = `UPDATE bakerys SET views = views + 1 WHERE id = "${data[0].id}"`
-            db.query(update, (error, data, fields) => { console.log(error); })
+            if (data.length === 0) {
 
+                let sql = `INSERT INTO bakerys_views 
+        (
+            bakery_id,
+            ip,
+            created_at
+        ) VALUES (
+            "${bakeryId}",
+            "${ip}",
+            "${moment().format('YYYY-MM-DD HH:mm:ss')}"
+            )`;
+
+                db.query(sql, (error, result) => { })
+
+            }
+
+        })
+
+        res.json({
+            succes: true
         })
 
     },
     updateBakery: async (req, res) => {
 
         const addName = req.body.addName,
-            url = addName.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''),
+            url = addName.toLowerCase().replaceAll('â', 'a').replaceAll('é', 'e').replaceAll('à', 'a').replaceAll(' - ', '-').replaceAll('\'', '-').replaceAll(' ', '-').replaceAll('’', '-').replaceAll('%', '-pourcent-').replaceAll('è', 'e').replaceAll('ï', 'i').replaceAll(',', '').replaceAll('/', '').replaceAll('--', '-').replaceAll('ô', 'o').replaceAll('ê', 'e').replaceAll('ë', 'e').replaceAll('ö', 'o'),
             addAdresse = req.body.addAdresse,
             addPhone = req.body.addPhone,
             addHandicap = req.body.addHandicap,
@@ -551,7 +657,7 @@ module.exports = {
                     small_content = "${addSmallContent}",
                     website = "${addWebsite}",
                     content = "${addDesc}",
-                    updated_at = "${formatDate(Date())}" WHERE id = ${addId}`
+                    updated_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}" WHERE id = ${addId}`
 
         db.query(update, (error, data, fields) => {
 
@@ -588,7 +694,7 @@ module.exports = {
                 ) VALUES (
                     "${userId}",
                     "${addId}",
-                    "${formatDate(Date())}"
+                    "${moment().format('YYYY-MM-DD HH:mm:ss')}"
                     )`;
 
                 db.query(sql, (error2, result2) => {
@@ -804,6 +910,35 @@ module.exports = {
 
                 })
 
+                // Insert db establishement by user_id
+                let establishement = `SELECT * FROM bakerys_establishment WHERE bakery_id = ${addId} AND user_id = ${userId} LIMIT 1`;
+                db.query(establishement, (error, data, fields) => {
+
+                    if (data.length >= 1) {
+
+                        var update = `UPDATE bakerys_establishment SET updated_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}", bakery_id = "${addId}" WHERE user_id = "${userId}"`
+                        db.query(update, (error, data, fields) => { console.log(error); })
+
+                    } else {
+
+                        let sql = `INSERT INTO bakerys_establishment 
+                (
+                    bakery_id,
+                    user_id,
+                    created_at
+                ) VALUES (
+                    "${addId}",
+                    "${userId}",
+                    "${moment().format('YYYY-MM-DD HH:mm:ss')}"
+                    )`;
+
+                        db.query(sql, (error2, result2) => { console.log(error2); })
+
+                    }
+
+                })
+
+
             })
 
         })
@@ -817,16 +952,16 @@ module.exports = {
     },
     bakerysMarkers: async (req, res) => {
 
-        const { region } = req.params
+        const { ville, id } = req.params
 
-        let sql = `SELECT * FROM region WHERE nom_slug = "${region}"`;
+        let bakerysV = `SELECT ville FROM bakerys WHERE active = 1 AND id = ${id}`;
 
-        db.query(sql, (errors, datas, fields) => {
+        db.query(bakerysV, (error, data, fields) => {
 
-            let bakerys = `SELECT lat, lng, adresse, title, id, url FROM bakerys WHERE active = 1 AND region = "${datas[0].nom}"`;
-            db.query(bakerys, (error, data, fields) => {
+            let bakerys = `SELECT lat, lng, adresse, title, postcode, ville, id, url FROM bakerys WHERE active = 1 AND ville = "${data[0].ville}"`;
+            db.query(bakerys, (error2, data2, fields) => {
 
-                if (error) {
+                if (error2) {
 
                     let errors = true
                     res.send({
@@ -835,14 +970,14 @@ module.exports = {
 
                 }
 
-                if (data.length >= 1) {
+                if (data2.length >= 1) {
 
                     let success = true
 
                     res.send({
                         success,
-                        nom: datas[0].nom,
-                        markers: data
+                        nom: data2[0].ville,
+                        markers: data2
                     })
 
                 } else {
@@ -851,7 +986,6 @@ module.exports = {
 
                     res.send({
                         success,
-                        nom: datas[0].nom,
                         markers: []
                     })
 
@@ -861,5 +995,247 @@ module.exports = {
 
         })
 
-    }
+    },
+    addClick: async (req, res) => {
+
+        const { bakeryId, ip } = req.body
+
+        let sql = `SELECT * FROM bakerys_click WHERE bakery_id = ${bakeryId} AND ip = "${ip}" AND created_at = "${moment().format('YYYY-MM-DD')}"`;
+
+        db.query(sql, (errors, data, fields) => {
+
+            if (data.length === 0) {
+
+                let sql = `INSERT INTO bakerys_click 
+        (
+            bakery_id,
+            ip,
+            created_at
+        ) VALUES (
+            "${bakeryId}",
+            "${ip}",
+            "${moment().format('YYYY-MM-DD HH:mm:ss')}"
+            )`;
+
+                db.query(sql, (error, result) => { })
+
+            }
+
+        })
+
+    },
+
+    bakeryEventsBanner: async (req, res) => {
+
+        var array = []
+
+        let sql = `SELECT * FROM bakerys_events WHERE active = 1`;
+
+
+        db.query(sql, (errors, data, fields) => {
+
+            data.forEach(element => {
+
+                array.push({
+                    id: element.id,
+                    start: moment(element.start).format('YYYY-MM-DD'),
+                    end: moment(element.end).format('YYYY-MM-DD'),
+                    text: element.title,
+                    barColor: "#" + element.color,
+                    moveVDisabled: true,
+                    moveHDisabled: true,
+                    visibility: "Hover",
+                })
+
+            })
+
+            if (errors) {
+                res.json({
+                    errors
+                })
+            }
+
+            let succes = true
+            res.json({
+                succes,
+                events: array
+            })
+
+        })
+
+    },
+
+    addBannerEvent: async (req, res) => {
+
+        const image = (req.files[0] !== undefined) ? req.files[0].filename : '',
+            image2 = (req.files[1] !== undefined) ? req.files[1].filename : ''
+
+        if (req.files[0] === undefined || req.files[0] === '' && req.files[1] === undefined || req.files[1] === '') {
+            let error = true
+            res.json({
+                error
+            })
+        }
+
+        let succes = true
+        res.json({
+            succes,
+            banner: image,
+            banner_square: image2
+        })
+
+    },
+
+    bakerysList: async (req, res) => {
+
+        let sql = `SELECT title, id FROM bakerys AS B WHERE active = 1 ORDER BY id DESC LIMIT 5`;
+
+        db.query(sql, (error, data, fields) => {
+            if (error) console.log(error);
+
+            let succes = true
+            res.json({
+                succes,
+                bakerys: data,
+            })
+        })
+
+    },
+
+    bakerysListSearch: async (req, res) => {
+
+        const search = req.params.search
+
+        var where_search = ''
+
+        if (search !== undefined) {
+            where_search += 'WHERE B.title LIKE "' + search + '%"'
+        }
+
+        let sql = `SELECT 
+        B.* 
+        FROM 
+        bakerys AS B 
+        ${where_search}
+        ORDER BY B.highlighting_at DESC, B.id DESC LIMIT 5`;
+
+        db.query(sql, (error, data, fields) => {
+            if (error) console.log(error);
+            res.json({
+                searchAll: data,
+            })
+        })
+
+    },
+
+    bakerysListSearchClear: async (req, res) => {
+
+        let sql = `SELECT 
+        B.* 
+        FROM 
+        bakerys AS B 
+        ORDER BY B.highlighting_at DESC, B.id DESC LIMIT 5`;
+
+        db.query(sql, (error, data, fields) => {
+            if (error) console.log(error);
+            res.json({
+                searchAll: data,
+            })
+        })
+
+    },
+
+    bakerysMarkersHome: async (req, res) => {
+
+        const { lat, lng } = req.params,
+            apiKey = process.env.GEOAPIFY_KEY
+
+        var config = {
+            method: 'get',
+            url: 'https://api.geoapify.com/v1/geocode/reverse?lat=' + lat + '&lon=' + lng + '&format=json&apiKey=' + apiKey,
+            headers: {}
+        };
+
+        axios(config)
+            .then(function (response) {
+
+                const city = response.data.results[0].city,
+                    postcode = response.data.results[0].postcode
+
+                let bakerys = `SELECT lat, lng, adresse, title, postcode, id, url FROM bakerys WHERE active = 1 AND adresse LIKE "%${city}%"`;
+                db.query(bakerys, (error, data, fields) => {
+
+                    if (error) {
+
+                        let errors = true
+                        res.send({
+                            errors
+                        })
+
+                    }
+
+                    if (data.length >= 1) {
+
+                        let success = true
+
+                        res.send({
+                            success,
+                            markers: data
+                        })
+
+                    } else {
+
+                        let success = true
+
+                        res.send({
+                            postcode,
+                            markers: []
+                        })
+
+                    }
+
+                })
+
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+    },
+    searchPlace: async (req, res) => {
+
+        const { search } = req.body,
+            apiKey = process.env.GEOAPIFY_KEY
+
+        var config = {
+            method: 'get',
+            url: 'https://api.geoapify.com/v1/geocode/autocomplete?text=' + search + '&lang=fr&limit=20&bias=countrycode:fr&format=json&apiKey=' + apiKey,
+            headers: {}
+        };
+
+        axios(config)
+            .then(function (response) {
+
+                if (response.data.results.length >= 1) {
+                    res.json({
+                        succes: true,
+                        search: response.data.results
+                    })
+                } else {
+                    res.json({
+                        succes: true,
+                        search: []
+                    })
+                }
+
+            })
+            .catch(function (error) {
+                console.log(error);
+                res.json({
+                    error: true,
+                    search: []
+                })
+            });
+
+    },
 }

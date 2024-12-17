@@ -13,13 +13,14 @@ module.exports = {
         var favoritesId = req.params.favorites
 
         favoritesId = favoritesId.replaceAll('-', ',')
+        favoritesId = favoritesId.substring(1)
 
         let sql = `SELECT 
         B.*,
-        BCS.title AS title_comment, 
         BCS.content AS content_comment, 
         BCS.author AS author_comment, 
         BCS.created_at AS created_at_comment,
+        COUNT(BV.id) AS views,
         IFNULL(COUNT(BD.id), 0) AS counter_devanture,
         IFNULL(SUM(BD.note), 0) AS sum_devanture,
         IFNULL(COUNT(BPE.id), 0) AS counter_proprete,
@@ -29,6 +30,7 @@ module.exports = {
         IFNULL(COUNT(BC.id), 0) AS counter_choix,
         IFNULL(SUM(BC.note), 0) AS sum_choix
         FROM bakerys AS B 
+        LEFT JOIN bakerys_views AS BV ON BV.bakery_id = B.id 
         LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id
         LEFT JOIN bakerys_devanture AS BD ON BD.bakery_id = B.id 
         LEFT JOIN bakerys_prix AS BP ON BP.bakery_id = B.id 

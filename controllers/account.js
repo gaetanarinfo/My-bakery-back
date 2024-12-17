@@ -29,29 +29,39 @@ transporter = nodemailer.createTransport({
   }
 })
 
-function formatDate (date) {
-  var d = new Date(date),
-    month = '' + (d.getMonth() + 1),
-    day = '' + d.getDate(),
-    year = d.getFullYear(),
-    hour = d.getUTCHours() + 2,
-    minute = d.getUTCMinutes(),
-    seconde = d.getUTCSeconds()
-
-  if (month.length < 2)
-    month = '0' + month;
-  if (day.length < 2)
-    day = '0' + day;
-
-  var formatDate = year + '-' + month + '-' + day
-
-  return [formatDate + ' ' + hour + ':' + minute + ':' + seconde];
-}
-
 var passwordGen = generator.generate({
   length: 8,
   numbers: true
 });
+
+var month = [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12
+],
+  month2 = new Array(
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre"
+  )
 
 /*
  * Controller
@@ -60,9 +70,12 @@ module.exports = {
   // Method Get
   login: async (req, res) => {
 
-    const { username, password } = req.body
+    const { username, password, application_id } = req.body
 
-    let verif_email = `SELECT * FROM users WHERE active >= 1 AND email = "${username}" LIMIT 1`;
+    let verif_email = `SELECT U.*, US.from_date, US.product_id FROM 
+    users AS U
+    LEFT JOIN user_subscription AS US ON US.user_id = U.id
+    WHERE U.active >= 1 AND U.email = "${username}" GROUP BY U.id LIMIT 1`;
 
     db.query(verif_email, (error, data, fields) => {
 
@@ -90,9 +103,22 @@ module.exports = {
 
             } else {
 
+              var date = moment().format('YYYY-MM-DD HH:mm:ss'),
+                from_date = moment(data[0].from_date).format('YYYY-MM-DD HH:mm:ss'),
+                subscription = false
+
+              if (date <= from_date && data[0].from_date !== null && data[0].product_id >= 3) {
+                subscription = true
+              } else {
+                subscription = false
+              }
+
               const user = {
                 id: data[0].id,
                 email: data[0].email,
+                status_legale: data[0].status_legale,
+                siret: data[0].siret,
+                tva: data[0].tva,
                 firstname: data[0].firstname,
                 fonction: data[0].fonction,
                 location: data[0].location,
@@ -101,13 +127,15 @@ module.exports = {
                 naissance: data[0].naissance,
                 lastname: data[0].lastname,
                 active: data[0].active,
+                subscription: subscription,
+                application_id: application_id
               };
 
               if (data[0].active === 1) {
 
                 const token = jwt.sign(user, process.env.JWT_KEY);
 
-                var update = `UPDATE users SET logged_at = "${formatDate(Date())}", token = "" WHERE id = "${user.id}"`
+                var update = `UPDATE users SET application_id = "${application_id}", logged_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}", token = "" WHERE id = "${user.id}"`
                 db.query(update, (error, data, fields) => { })
 
                 let success = true
@@ -147,7 +175,7 @@ module.exports = {
   },
   create: async (req, res) => {
 
-    const { email, lastname, firstname, location, fonction, phone, mobile } = req.body,
+    const { email, lastname, firstname, location, fonction, phone, mobile, application_id, pays, pays_code, departement, ville, postcode, department_code, status_legale, siret, tva, known, budget } = req.body,
       ip = req.ip.replace('::ffff:', ''),
       token_activate = generateToken.randomBytes(16).toString('hex')
 
@@ -174,28 +202,52 @@ module.exports = {
 
             let sql = `INSERT INTO users (
                             email, 
+                            status_legale,
+                            siret,
+                            tva,
+                            known,
+                            budget,
                             password,
                             ip,
                             firstname,
                             lastname,
                             location,
+                            pays,
+                            pays_code,
+                            departement,
+                            ville,
+                            postcode, 
+                            department_code,
                             fonction,
                             mobile,
                             phone,
                             token_activate,
+                            application_id,
                             created_at
                             ) VALUES (
                              "${email}", 
+                             "${status_legale}",
+                             "${siret}",
+                             "${tva}",
+                             "${known}",
+                             "${budget}",
                              "${hash}",
                              "${ip}",
                              "${firstname}",
                              "${lastname}",
                              "${location}",
+                             "${pays}",
+                             "${pays_code}",
+                             "${departement}",
+                            "${ville}",
+                             "${postcode}",
+                             "${department_code}",
                              "${fonction}",
                              "${mobileNull}",
                              "${phoneNull}",
                              "${token_activate}",
-                             "${formatDate(Date())}"
+                             "${application_id}",
+                             "${moment().format('YYYY-MM-DD HH:mm:ss')}"
                              )`;
 
             db.query(sql, (errors, data) => {
@@ -209,67 +261,76 @@ module.exports = {
 
               }
 
-              // let data = qs.stringify({
-              //     'accessToken': process.env.WONDERPUSH_KEY,
-              //     'targetSegmentIds': '@ALL',
-              //     'notification': '{"alert":{"text":"👌👏 Retex - Salut ' + firstname + ', bienvenue sur notre application."}}'
-              // });
+              let dataWonder = qs.stringify({
+                'accessToken': process.env.WONDERPUSH_KEY,
+                'targetSegmentIds': '@ALL',
+                'notification': '{"alert":{"title": "My Bakery 🤗🥖", "text":"Bonjour ' + firstname + ', bienvenue sur My Bakery."}}'
+              });
 
-              // let config = {
-              //     method: 'post',
-              //     maxBodyLength: Infinity,
-              //     url: 'https://management-api.wonderpush.com/v1/deliveries',
-              //     headers: {
-              //         'Content-Type': 'application/x-www-form-urlencoded'
-              //     },
-              //     data: data
-              // };
+              let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: 'https://management-api.wonderpush.com/v1/deliveries',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                data: dataWonder
+              };
 
-              const content = 'Bonjour ' + firstname + ',<br/><br>';
-              const content2 = 'Récapitulatif des informations :<br/><br>';
-              const content4 = 'Prénom : ' + firstname + '<br/>';
-              const content5 = 'Nom : ' + lastname + '<br/>';
-              const content6 = 'Email : ' + email + '<br/>';
-              const content13 = 'Mot de passe : ' + passwordGen + '<br/>';
-              const content7 = 'Fonction : ' + fonction + '<br/>';
-              const content14 = 'Location : ' + location + '<br/>';
-              const content15 = 'Mobile : ' + mobileNull + '<br/>';
-              const content8 = 'Fixe : ' + phoneNull + '<br/><br/>';
-              const content9 = 'Pour activer votre compte merci de cliquer sur le lien : <a href="https://my-bakery.fr#/activate-account/' + token_activate + '">activer maintenant</a>.<br/><br/>';
+              axios.request(config)
+                .then((response) => {
 
-              const content10 = 'Nous vous remercions de votre confiance.<br/><br/>';
+                  if (response.status === 202) {
 
-              const content11 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
-              const content12 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
+                    const content = 'Bonjour ' + firstname + ',<br/><br>';
+                    const content2 = 'Récapitulatif des informations :<br/><br>';
+                    const content4 = 'Prénom : ' + firstname + '<br/>';
+                    const content5 = 'Nom : ' + lastname + '<br/>';
+                    const content6 = 'Email : ' + email + '<br/>';
+                    const content13 = 'Mot de passe : ' + passwordGen + '<br/>';
+                    const content7 = 'Fonction : ' + fonction + '<br/>';
+                    const content14 = 'Location : ' + location + '<br/>';
+                    const content15 = 'Mobile : ' + mobileNull + '<br/>';
+                    const content8 = 'Fixe : ' + phoneNull + '<br/><br/>';
+                    const content9 = 'Pour activer votre compte merci de cliquer sur le lien : <a href="https://my-bakery.fr/activate-account/' + token_activate + '">activer maintenant</a>.<br/><br/>';
 
-              // On configure notre mail à envoyer par nodemailer
-              const mailOptions = {
-                from: 'My bakery <' + process.env.USER_MAILER + '>',
-                to: firstname + ' ' + lastname + ' <' + email + '>',
-                subject: 'Votre inscription sur My Bakery',
-                html: content + content2 + content4 + content5 + content6 + content13 + content7 + content14 + content15 + content8 + content9 + content10 + content11 + content12
-              }
+                    const content10 = 'Nous vous remercions de votre confiance.<br/><br/>';
 
-              transporter.sendMail(mailOptions, (err, info) => {
+                    const content11 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
+                    const content12 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
 
-                if (err) {
+                    // On configure notre mail à envoyer par nodemailer
+                    const mailOptions = {
+                      from: 'My bakery <' + process.env.USER_MAILER + '>',
+                      to: firstname + ' ' + lastname + ' <' + email + '>',
+                      subject: 'Votre inscription sur My Bakery',
+                      html: content + content2 + content4 + content5 + content6 + content13 + content7 + content14 + content15 + content8 + content9 + content10 + content11 + content12
+                    }
 
-                  let error = true
-                  res.json({
-                    error
-                  })
+                    transporter.sendMail(mailOptions, (err, info) => {
 
-                } else {
+                      if (err) {
 
-                  let success = true
+                        let error = true
+                        res.json({
+                          error
+                        })
 
-                  res.send({
-                    success,
-                  })
+                      } else {
 
-                }
+                        let success = true
 
-              })
+                        res.send({
+                          success,
+                        })
+
+                      }
+
+                    })
+
+                  }
+
+                })
 
             })
 
@@ -299,7 +360,7 @@ module.exports = {
 
       if (data.length >= 1) {
 
-        var update = `UPDATE users SET activate_at = "${formatDate(Date())}", token_activate = "", active = 1 WHERE id = "${data[0].id}"`
+        var update = `UPDATE users SET activate_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}", token_activate = "", active = 1 WHERE id = "${data[0].id}"`
         db.query(update, (error, data, fields) => { console.log(error) })
 
         let success = true
@@ -356,7 +417,7 @@ module.exports = {
         const content = 'Bonjour ' + user[0].firstname + ',<br/><br>';
         const content2 = 'Récapitulatif des informations :<br/><br>';
         const content3 = 'Email : ' + email + '<br/><br/>';
-        const content4 = 'Cliquer sur le lien pour modifier votre mot de passe ' + '<a href="https:///My-bakery/#/forgot-password/' + token_password + '">modifier maintenant</a>.' + '<br/><br/>';
+        const content4 = 'Cliquer sur le lien pour modifier votre mot de passe ' + '<a href="https:///my-bakery/forgot-password/' + token_password + '">modifier maintenant</a>.' + '<br/><br/>';
         const content5 = 'Si vous n\'êtes pas à l\'origine de cette action merci de nous contacter rapidement.<br/><br/>';
 
         const content6 = 'Nous vous remercions de votre confiance.<br/><br/>';
@@ -403,8 +464,6 @@ module.exports = {
   tokenForgot: async (req, res) => {
 
     const { token, newPassword } = req.body
-
-    console.log(req.body);
 
     let sql = `SELECT * FROM users WHERE token_password = "${token}" LIMIT 1`;
 
@@ -532,11 +591,43 @@ module.exports = {
 
     db.query(sql, (errors, user) => {
 
-      let success = true
-      res.json({
-        success,
-        user: user[0]
+      let user_subscription = `SELECT * FROM user_subscription WHERE user_id = ${user[0].id} ORDER BY id DESC LIMIT 1`;
+
+      db.query(user_subscription, (errors, data) => {
+
+        if (data.length >= 1) {
+
+          var date = moment().format('YYYY-MM-DD HH:mm:ss'),
+            from_date = moment(data[0].from_date).format('YYYY-MM-DD HH:mm:ss'),
+            subscription = false
+
+          if (date <= from_date && data[0].product_id >= 3) {
+            subscription = true
+          } else {
+            subscription = false
+          }
+
+          let success = true
+          res.json({
+            success,
+            user: user[0],
+            subscription,
+            dateSubcription: moment(data[0].from_date).format('DD MMMM YYYY à HH:mm')
+          })
+
+        } else {
+
+          let success = true
+          res.json({
+            success,
+            user: user[0],
+            subscription: false,
+          })
+
+        }
+
       })
+
     })
 
   },
@@ -589,7 +680,6 @@ module.exports = {
     })
 
   },
-
   userActivityDelete: async (req, res) => {
 
     const { email, id } = req.params
@@ -620,7 +710,6 @@ module.exports = {
     })
 
   },
-
   userOrders: async (req, res) => {
 
     const { email, id, years } = req.params
@@ -684,35 +773,6 @@ module.exports = {
 
     moment.locale('fr')
 
-    var month = [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12
-    ],
-      month2 = new Array(
-        "Janvier",
-        "Février",
-        "Mars",
-        "Avril",
-        "Mai",
-        "Juin",
-        "Juillet",
-        "Août",
-        "Septembre",
-        "Octobre",
-        "Novembre",
-        "Décembre"
-      )
-
     var total = [],
       total2 = []
 
@@ -750,6 +810,291 @@ module.exports = {
 
         })
 
+      })
+
+    })
+
+  },
+
+  userEstablishement: async (req, res) => {
+
+    const { year, bakeryId } = req.params
+
+    moment.locale('fr')
+
+    var total = [],
+      total2 = []
+
+    month.forEach(element => {
+
+      if (element <= 9) element = 0 + '' + element
+      element = String(element)
+
+      let sql = `SELECT IFNULL(COUNT(O.id), 0) AS totalId FROM bakerys_views AS O WHERE (O.created_at BETWEEN '${moment().format(year + '-' + element + '-01')}' AND '${moment().format(year + '-' + element + '-30')}') AND O.bakery_id = ${bakeryId} LIMIT 1`;
+
+      db.query(sql, (errors, data) => {
+
+        data.forEach(el => {
+          total.push({ totalId: parseInt(el.totalId) })
+        });
+
+        let sql = `SELECT IFNULL(COUNT(O.id), 0) AS totalId FROM bakerys_click AS O WHERE (O.created_at BETWEEN '${moment().format(year + '-' + element + '-01')}' AND '${moment().format(year + '-' + element + '-30')}') AND O.bakery_id = ${bakeryId} LIMIT 1`;
+
+        db.query(sql, (errors, data2) => {
+
+          data2.forEach(el => {
+            total2.push({ totalId: parseInt(el.totalId) })
+          });
+
+          if (element === "12") {
+
+            let succes = true
+            res.json({
+              succes,
+              months: month2,
+              views: total,
+              click: total2,
+            })
+          }
+
+        })
+
+      })
+
+    })
+
+  },
+
+  userBakery: async (req, res) => {
+
+    const { email, id } = req.params
+
+    let sql = `SELECT id FROM users WHERE email = "${email}" AND id = ${id} LIMIT 1`;
+
+    db.query(sql, (errors, user) => {
+
+      if (errors) {
+        let error = true
+        res.json({
+          error,
+        })
+      }
+
+      if (user.length >= 1) {
+
+        let sqlEstablishement = `SELECT U.credits, B.image, IFNULL(COUNT(DISTINCT(BC.id)), 0) AS click, IFNULL(COUNT(DISTINCT(BV.id)), 0) AS viewsN, CONCAT(U.firstname, ' ', U.lastname) AS given_name, BE.*, B.title, B.url, B.small_content 
+        FROM bakerys_establishment AS BE
+        LEFT JOIN bakerys AS B ON B.id = BE.bakery_id
+        LEFT JOIN users AS U ON U.id = BE.user_id
+        LEFT JOIN bakerys_click AS BC ON BC.bakery_id = BE.bakery_id
+        LEFT JOIN bakerys_views AS BV ON BV.bakery_id = BE.bakery_id
+        WHERE BE.user_id = ${user[0].id} GROUP BY BE.id ORDER BY BE.created_at DESC`;
+
+        db.query(sqlEstablishement, (errors2, verif) => {
+
+          if (errors2) {
+            let error = false
+            res.json({
+              error,
+            })
+          }
+
+          let succes = true
+          res.json({
+            succes,
+            bakerys: verif
+          })
+
+        })
+
+      }
+
+    })
+
+  },
+
+  userEstablishementDelete: async (req, res) => {
+
+    const { email, user_id, bakeryId } = req.body
+
+    let sql = `SELECT * FROM users WHERE email = "${email}" AND id = ${user_id} LIMIT 1`;
+
+    db.query(sql, (errors, user) => {
+
+      if (errors) {
+        let error = true
+        res.json({
+          errors,
+        })
+      }
+
+      if (user.length >= 1) {
+
+        var deleteEstablishement = `DELETE FROM bakerys_establishment WHERE user_id = ${user_id} AND bakery_id = ${bakeryId}`
+        db.query(deleteEstablishement, (error, data, fields) => {
+          console.log(error);
+        })
+
+        let success = true
+        res.json({
+          success,
+        })
+
+      }
+
+    })
+
+  },
+
+  userBanners: async (req, res) => {
+
+    const { email, id } = req.params
+
+    let sql = `SELECT U.*, BE.*, IFNULL(COUNT(DISTINCT(BC.id)), 0) AS clicksBanner, IFNULL(COUNT(DISTINCT(BV.id)), 0) AS viewsBanner FROM bakerys_events AS BE 
+        LEFT JOIN users AS U ON U.id = BE.user_id
+        LEFT JOIN banner_clicks AS BC ON BC.banner_id = BE.id
+        LEFT JOIN banner_views AS BV ON BV.banner_id = BE.id
+        WHERE BE.user_id = ${id} AND U.email = "${email}" GROUP BY BE.id ORDER BY U.created_at DESC`;
+
+    db.query(sql, (errors, banners) => {
+
+      let success = true
+      res.json({
+        success,
+        bannerTable: banners
+      })
+
+    })
+
+  },
+
+  userBanner: async (req, res) => {
+
+    const { year, bannerId } = req.params
+
+    moment.locale('fr')
+
+    var total = [],
+      total2 = []
+
+    month.forEach(element => {
+
+      if (element <= 9) element = 0 + '' + element
+      element = String(element)
+
+      let sql = `SELECT IFNULL(COUNT(O.id), 0) AS totalId FROM banner_views AS O WHERE (O.created_at BETWEEN '${moment().format(year + '-' + element + '-01')}' AND '${moment().format(year + '-' + element + '-30')}') AND O.banner_id = ${bannerId} LIMIT 1`;
+
+      db.query(sql, (errors, data) => {
+
+        data.forEach(el => {
+          total.push({ totalId: parseInt(el.totalId) })
+        });
+
+        let sql = `SELECT IFNULL(COUNT(O.id), 0) AS totalId FROM banner_clicks AS O WHERE (O.created_at BETWEEN '${moment().format(year + '-' + element + '-01')}' AND '${moment().format(year + '-' + element + '-30')}') AND O.banner_id = ${bannerId} LIMIT 1`;
+
+        db.query(sql, (errors, data2) => {
+
+          data2.forEach(el => {
+            total2.push({ totalId: parseInt(el.totalId) })
+          });
+
+          if (element === "12") {
+
+            let succes = true
+            res.json({
+              succes,
+              months: month2,
+              views: total,
+              click: total2,
+            })
+          }
+
+        })
+
+      })
+
+    })
+
+  },
+
+  userUpdatePicture: async (req, res) => {
+
+    const image = (req.files[0] !== undefined) ? 'https://serveur.my-bakery.fr/users/images/' + req.files[0].filename : '',
+      { userEmail } = req.body
+
+    var update = `UPDATE users SET updated_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}", image = "${image}" WHERE email = "${userEmail}"`
+    db.query(update, (errors, data, fields) => {
+
+      if (errors) {
+        let error = true
+        res.json({
+          error,
+        })
+      }
+
+      let succes = true
+      res.send({
+        succes
+      })
+
+    })
+
+  },
+
+  userUpdate: async (req, res) => {
+
+    const {
+      id,
+      email,
+      status_legale,
+      siret,
+      tva,
+      firstname,
+      lastname,
+      naissance,
+      fonction,
+      location,
+      phone,
+      mobile,
+      pays,
+      pays_code,
+      departement,
+      ville,
+      postcode,
+      department_code,
+    } = req.body
+
+    var update = `UPDATE users SET 
+      status_legale = "${status_legale}",
+      siret = "${siret}",
+      tva = "${tva}",
+      firstname = "${firstname}",
+      lastname = "${lastname}",
+      naissance = "${naissance}",
+      fonction = "${fonction}",
+      location = "${location}",
+      phone = "${phone}",
+      mobile = "${mobile}",
+      pays = "${pays}",
+      pays_code = "${pays_code}",
+      departement = "${departement}",
+      ville = "${ville}",
+      postcode = "${postcode}",
+      department_code = "${department_code}"
+    WHERE email = "${email}" AND id = ${id}`
+    db.query(update, (errors, data, fields) => {
+
+      if (errors) {
+        let error = true
+        res.json({
+          error,
+          messsage: 'Une erreur s\'est produite lors de la modification de votre profil!'
+        })
+      }
+
+      let succes = true
+      res.send({
+        succes
       })
 
     })

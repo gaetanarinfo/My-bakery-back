@@ -9,7 +9,7 @@ module.exports = {
     // Method Get
     allProducts: async (req, res) => {
 
-        let products = `SELECT * FROM products ORDER BY id ASC`;
+        let products = `SELECT * FROM products WHERE app = 0 ORDER BY id ASC`;
 
         db.query(products, (error, data, fields) => {
 
