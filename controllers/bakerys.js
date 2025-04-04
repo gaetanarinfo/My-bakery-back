@@ -42,7 +42,7 @@ module.exports = {
         BCS.author AS author_comment, 
         BCS.created_at AS created_at_comment
         FROM bakerys AS B 
-        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.active = 1 GROUP BY B.id ORDER BY B.highlighting_at DESC, B.id DESC LIMIT 9`;
+        LEFT JOIN bakerys_comments AS BCS ON BCS.bakery_id = B.id WHERE B.active = 1 GROUP BY B.id ORDER BY B.highlighting_at DESC, B.id DESC LIMIT 21`;
 
         db.query(sql, (error, data, fields) => {
 
@@ -72,12 +72,12 @@ module.exports = {
     },
     getAllPage: async (req, res) => {
 
-        const { page, search, location, postalCode, prix, devanture, choix, proprete } = req.body
+        const { page, search, location, postalCode, city, note_google, prix, devanture, choix, proprete } = req.body
 
-        var limitation = 9
+        var limitation = 21
 
         let reqPage = parseInt(page) - 1
-        let pages = parseInt(9)
+        let pages = parseInt(21)
         let final = pages * reqPage
 
         var requete = ''
@@ -98,18 +98,25 @@ module.exports = {
             requete += 'AND BPP.note <= ROUND((BPP.note * ' + (proprete) + ' / B.counter_proprete), 1)'
         }
 
-        if(search) {
+        if(note_google >= 1) {
+            requete += 'AND B.total_rating_google <= "' + note_google + '"'
+        }
+
+        if (search) {
             requete += 'AND B.title LIKE "%' + search + '%" '
         }
 
-        if(location) {
+        if (location) {
             requete += 'AND B.adresse LIKE "%' + location + '%" '
         }
 
-        if(postalCode) {
+        if (postalCode) {
             requete += 'AND B.postcode LIKE "%' + postalCode + '%" '
         }
 
+        if (city) {
+            requete += 'AND B.ville = "' + city + '" '
+        }
 
         let sql = `SELECT B.*,
         BCS.content AS content_comment, 
@@ -154,7 +161,8 @@ module.exports = {
             WHERE B.active = 1
             ${requete}
             GROUP BY B.id 
-            ORDER BY B.highlighting_at DESC, B.id DESC`;
+            ORDER BY B.highlighting_at DESC, B.id DESC
+            `;
 
             db.query(sql2, (error2, data2, fields) => {
 
@@ -568,10 +576,10 @@ module.exports = {
 
         const page = req.params.page
 
-        var limitation = 9
+        var limitation = 21
 
         let reqPage = parseInt(page) - 1
-        let pages = parseInt(9)
+        let pages = parseInt(21)
         let final = pages * reqPage
 
         let sql = `SELECT B.*,
@@ -1230,7 +1238,6 @@ module.exports = {
 
             })
             .catch(function (error) {
-                console.log(error);
                 res.json({
                     error: true,
                     search: []
@@ -1238,4 +1245,96 @@ module.exports = {
             });
 
     },
+
+    getBakerysAdmin: async (req, res) => {
+
+        const { email } = req.params
+
+        let userVerifAdmin = `SELECT email, admin FROM users WHERE email = "${email}" LIMIT 1`;
+
+        db.query(userVerifAdmin, (error, data, fields) => {
+
+            if (error) {
+                res.json({
+                    error,
+                })
+            }
+
+            if (data[0].admin >= 1) {
+
+                let bakerys = `SELECT B.*, IFNULL(COUNT(DISTINCT(BC.id)), 0) AS clicks_bakery, IFNULL(COUNT(DISTINCT(BV.id)), 0) AS views_bakery FROM 
+                bakerys AS B
+                LEFT JOIN bakerys_views AS BV ON BV.bakery_id = B.id
+                LEFT JOIN bakerys_click AS BC ON BC.bakery_id = B.id
+                GROUP BY B.id ORDER BY B.title ASC, B.created_at DESC`;
+
+                db.query(bakerys, (error2, data2, fields2) => {
+
+                    if (error2) {
+                        res.json({
+                            error2,
+                        })
+                    }
+
+                    res.json({
+                        succes: true,
+                        bakerysTable: data2,
+                    })
+
+                })
+
+            } else {
+
+                res.json({
+                    succes: true,
+                    bakerysTable: [],
+                })
+
+            }
+
+        })
+
+    },
+
+    updateBakeryAdmin: async (req, res) => {
+
+        const { id, status, email } = req.body
+
+        let userVerifAdmin = `SELECT email, admin FROM users WHERE email = "${email}" LIMIT 1`;
+
+        db.query(userVerifAdmin, (error, data, fields) => {
+
+            if (error) {
+                res.json({
+                    error,
+                })
+            }
+
+            if (data[0].admin >= 1) {
+
+                var update = `UPDATE bakerys SET active = "${status}", updated_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}" WHERE id = ${id}`
+
+                db.query(update, (error, data, fields) => {
+
+                    if (error) {
+                        let errors = true
+                        res.json({
+                            errors,
+                            error,
+                            status
+                        })
+                    };
+
+                    let succes = true
+                    res.json({
+                        succes
+                    })
+                })
+
+            }
+
+        })
+
+    },
+
 }

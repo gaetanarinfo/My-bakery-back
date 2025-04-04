@@ -254,7 +254,7 @@ cron.schedule('*/1 * * * *', () => {
 
             var update = `UPDATE bakerys SET counter_prix = ${data[0].counter_prix}, sum_prix = ${data[0].sum_prix} WHERE id = ${data[0].bakery_id}`
             db.query(update, (error, data, fields) => { })
-        
+
         }
 
     })
@@ -328,6 +328,8 @@ cron.schedule('0 1 * * *', () => {
                 console.log(err)
             }
         })
+
+        return;
 
     })
 

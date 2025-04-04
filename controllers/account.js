@@ -14,6 +14,13 @@ const axios = require('axios'),
   moment = require('moment'),
   generateToken = require('crypto')
 
+/*
+* Import Mailer
+****************/
+const header = require('./mailer/header'),
+  body = require('./mailer/body'),
+  footer = require('./mailer/footer')
+
 // Déclaration de notre transporter
 // C'est en quelque sorte notre connexion à notre boite mail
 transporter = nodemailer.createTransport({
@@ -70,7 +77,7 @@ module.exports = {
   // Method Get
   login: async (req, res) => {
 
-    const { username, password, application_id } = req.body
+    const { username, password, application_id, ip } = req.body
 
     let verif_email = `SELECT U.*, US.from_date, US.product_id FROM 
     users AS U
@@ -135,15 +142,47 @@ module.exports = {
 
                 const token = jwt.sign(user, process.env.JWT_KEY);
 
-                var update = `UPDATE users SET application_id = "${application_id}", logged_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}", token = "" WHERE id = "${user.id}"`
+                var update = `UPDATE users SET ip =  "${ip}", application_id = "${application_id}", logged_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}", token = "" WHERE id = "${user.id}"`
                 db.query(update, (error, data, fields) => { })
 
                 let success = true
 
-                res.send({
-                  success,
-                  token,
-                  user,
+                const title = 'Connexion détectée',
+                  content = 'Bonjour ' + data[0].firstname + ',<br>',
+                  content2 = 'Une connexion a été détectée sur votre compte le ' + moment().format('DD MMMM YYYY à HH:mm:ss') + ' !<br>',
+                  content3 = 'Ip : ' + ip,
+                  content4 = 'Si ce n\'est pas vous, merci de nous contacter rapidement.<br/>',
+                  content5 = 'Nous vous remercions de votre confiance.<br/>',
+                  content6 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/>',
+                  link = '<a style="text-decoration: none;color: #000;" href="https://my-bakery.fr">My-bakery</a>';
+
+                // On configure notre mail à envoyer par nodemailer
+                const mailOptions = {
+                  from: 'My bakery <' + process.env.USER_MAILER + '>',
+                  to: data[0].firstname + ' ' + data[0].lastname + ' <' + data[0].email + '>',
+                  subject: 'Connexion détectée sur My Bakery',
+                  html: header.setOther() + body.setLogin(title, content, content2, content3, content4, content5, content6, link) + footer.setOther()
+                }
+
+                transporter.sendMail(mailOptions, (err, info) => {
+
+                  if (err) {
+
+                    let error = true
+                    res.json({
+                      error
+                    })
+
+                  } else {
+
+                    res.send({
+                      success,
+                      token,
+                      user,
+                    })
+
+                  }
+
                 })
 
               } else {
@@ -175,8 +214,7 @@ module.exports = {
   },
   create: async (req, res) => {
 
-    const { email, lastname, firstname, location, fonction, phone, mobile, application_id, pays, pays_code, departement, ville, postcode, department_code, status_legale, siret, tva, known, budget } = req.body,
-      ip = req.ip.replace('::ffff:', ''),
+    const { email, lastname, firstname, location, fonction, phone, mobile, application_id, pays, pays_code, departement, ville, postcode, department_code, status_legale, siret, tva, known, budget, ip } = req.body,
       token_activate = generateToken.randomBytes(16).toString('hex')
 
     const mobileNull = (mobile === null) ? "NC" : mobile,
@@ -264,7 +302,7 @@ module.exports = {
               let dataWonder = qs.stringify({
                 'accessToken': process.env.WONDERPUSH_KEY,
                 'targetSegmentIds': '@ALL',
-                'notification': '{"alert":{"title": "My Bakery 🤗🥖", "text":"Bonjour ' + firstname + ', bienvenue sur My Bakery."}}'
+                'notification': '{"alert":{"title": "My Bakery 🤗🥖", "text":"Bonjour, nous souhaitons la bienvenue à ' + firstname + ' sur My Bakery."}}'
               });
 
               let config = {
@@ -282,29 +320,28 @@ module.exports = {
 
                   if (response.status === 202) {
 
-                    const content = 'Bonjour ' + firstname + ',<br/><br>';
-                    const content2 = 'Récapitulatif des informations :<br/><br>';
-                    const content4 = 'Prénom : ' + firstname + '<br/>';
-                    const content5 = 'Nom : ' + lastname + '<br/>';
-                    const content6 = 'Email : ' + email + '<br/>';
-                    const content13 = 'Mot de passe : ' + passwordGen + '<br/>';
-                    const content7 = 'Fonction : ' + fonction + '<br/>';
-                    const content14 = 'Location : ' + location + '<br/>';
-                    const content15 = 'Mobile : ' + mobileNull + '<br/>';
-                    const content8 = 'Fixe : ' + phoneNull + '<br/><br/>';
-                    const content9 = 'Pour activer votre compte merci de cliquer sur le lien : <a href="https://my-bakery.fr/activate-account/' + token_activate + '">activer maintenant</a>.<br/><br/>';
-
-                    const content10 = 'Nous vous remercions de votre confiance.<br/><br/>';
-
-                    const content11 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
-                    const content12 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
+                    const title = 'Votre inscription',
+                      content = 'Bonjour ' + firstname + ',<br>',
+                      content2 = 'Récapitulatif des informations :<br>',
+                      content3 = 'Prénom : ' + firstname,
+                      content4 = 'Nom : ' + lastname,
+                      content5 = 'Email : ' + email,
+                      content6 = 'Mot de passe : ' + passwordGen,
+                      content7 = 'Fonction : ' + fonction,
+                      content8 = 'Adresse : ' + location,
+                      content9 = 'Mobile : ' + mobileNull,
+                      content10 = 'Fixe : ' + phoneNull + '<br/>',
+                      content11 = 'Pour activer votre compte merci de cliquer sur le lien : <a href="https://my-bakery.fr/activate-account/' + token_activate + '">activer maintenant</a>.<br/>',
+                      content12 = 'Nous vous remercions de votre confiance.<br/>',
+                      content13 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/>',
+                      link = '<a style="text-decoration: none;color: #000;" href="https://my-bakery.fr">My-bakery</a>';
 
                     // On configure notre mail à envoyer par nodemailer
                     const mailOptions = {
                       from: 'My bakery <' + process.env.USER_MAILER + '>',
                       to: firstname + ' ' + lastname + ' <' + email + '>',
                       subject: 'Votre inscription sur My Bakery',
-                      html: content + content2 + content4 + content5 + content6 + content13 + content7 + content14 + content15 + content8 + content9 + content10 + content11 + content12
+                      html: header.setOther() + body.setRegister(title, content, content2, content3, content4, content5, content6, content7, content8, content9, content10, content11, content12, content13, link) + footer.setOther()
                     }
 
                     transporter.sendMail(mailOptions, (err, info) => {
@@ -376,7 +413,7 @@ module.exports = {
         res.json({
           error,
           activateAccount: false,
-          message: 'Un problème est survenu lors de l\'actvation de votre compte sur My Bakery !'
+          message: 'Une erreur est survenu lors de l\'actvation de votre compte sur My Bakery !'
         })
 
       }
@@ -414,23 +451,28 @@ module.exports = {
 
       if (user.length >= 1) {
 
-        const content = 'Bonjour ' + user[0].firstname + ',<br/><br>';
-        const content2 = 'Récapitulatif des informations :<br/><br>';
-        const content3 = 'Email : ' + email + '<br/><br/>';
-        const content4 = 'Cliquer sur le lien pour modifier votre mot de passe ' + '<a href="https:///my-bakery/forgot-password/' + token_password + '">modifier maintenant</a>.' + '<br/><br/>';
-        const content5 = 'Si vous n\'êtes pas à l\'origine de cette action merci de nous contacter rapidement.<br/><br/>';
+        const content = 'Bonjour ' + user[0].firstname + ',';
+        const content2 = 'Récapitulatif des informations :';
+        const content3 = 'Email : ' + email;
+       
+       const content4 = 'Cliquer sur le lien pour modifier votre mot de passe ' + '<a href="https:///my-bakery.fr/forgot-password/' + token_password + '">modifier maintenant</a>.';
+        
+        const content5 = 'Si vous n\'êtes pas à l\'origine de cette action merci de nous contacter rapidement.';
 
-        const content6 = 'Nous vous remercions de votre confiance.<br/><br/>';
+        const content6 = 'Nous vous remercions de votre confiance.';
 
-        const content7 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
-        const content8 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
+        const content7 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/>';
+
+        const link = '<a style="text-decoration: none;color: #000;" href="https://my-bakery.fr">My-bakery</a>';
+
+        const title = 'Réinitialisation de votre mot de passe'
 
         // On configure notre mail à envoyer par nodemailer
         const mailOptions = {
           from: 'My bakery <' + process.env.USER_MAILER + '>',
           to: user[0].firstname + ' ' + user[0].lastname + ' <' + email + '>',
           subject: 'Réinitialisation de votre mot de passe sur My Bakery',
-          html: content + content2 + content3 + content4 + content5 + content6 + content7 + content8
+          html: header.setOther() + body.setForgot(title, content, content2, content3, content4, content5, content6, content7, link) + footer.setOther()
         }
 
         transporter.sendMail(mailOptions, (err, info) => {
@@ -478,23 +520,28 @@ module.exports = {
 
       if (user.length >= 1) {
 
-        const content = 'Bonjour ' + user[0].firstname + ',<br/><br>';
-        const content2 = 'Récapitulatif des informations :<br/><br>';
-        const content3 = 'Email : ' + user[0].email + '<br/>';
-        const content4 = 'Mot de passe ' + newPassword + '<br/><br/>';
-        const content5 = 'Si vous n\'êtes pas à l\'origine de cette action merci de nous contacter rapidement.<br/><br/>';
+        const content = 'Bonjour ' + user[0].firstname + ',';
+        const content2 = 'Récapitulatif des informations :';
+       
+        const content3 = 'Email : ' + user[0].email;
+        const content4 = 'Mot de passe ' + newPassword;
+       
+        const content5 = 'Si vous n\'êtes pas à l\'origine de cette action merci de nous contacter rapidement.';
 
-        const content6 = 'Nous vous remercions de votre confiance.<br/><br/>';
+        const content6 = 'Nous vous remercions de votre confiance.';
 
-        const content7 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
-        const content8 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
+        const content7 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/>';
+       
+        const link = '<a style="text-decoration: none;color: #000;" href="https://my-bakery.fr">My-bakery</a>';
+
+        const title = 'Réinitialisation de votre mot de passe';
 
         // On configure notre mail à envoyer par nodemailer
         const mailOptions = {
           from: 'My bakery <' + process.env.USER_MAILER + '>',
           to: user[0].firstname + ' ' + user[0].lastname + ' <' + user[0].email + '>',
           subject: 'Réinitialisation de votre mot de passe sur My Bakery',
-          html: content + content2 + content3 + content4 + content5 + content6 + content7 + content8
+          html: header.setOther() + body.setTokenforgot(title, content, content2, content3, content4, content5, content6, content7, link) + footer.setOther()
         }
 
         transporter.sendMail(mailOptions, (err, info) => {
@@ -745,7 +792,6 @@ module.exports = {
     })
 
   },
-
   orderShow: async (req, res) => {
 
     const { paiementId } = req.params
@@ -764,9 +810,7 @@ module.exports = {
       })
 
     })
-
   },
-
   userBudget: async (req, res) => {
 
     const { year } = req.params
@@ -815,7 +859,6 @@ module.exports = {
     })
 
   },
-
   userEstablishement: async (req, res) => {
 
     const { year, bakeryId } = req.params
@@ -864,7 +907,6 @@ module.exports = {
     })
 
   },
-
   userBakery: async (req, res) => {
 
     const { email, id } = req.params
@@ -912,7 +954,6 @@ module.exports = {
     })
 
   },
-
   userEstablishementDelete: async (req, res) => {
 
     const { email, user_id, bakeryId } = req.body
@@ -945,7 +986,6 @@ module.exports = {
     })
 
   },
-
   userBanners: async (req, res) => {
 
     const { email, id } = req.params
@@ -967,7 +1007,6 @@ module.exports = {
     })
 
   },
-
   userBanner: async (req, res) => {
 
     const { year, bannerId } = req.params
@@ -1016,7 +1055,6 @@ module.exports = {
     })
 
   },
-
   userUpdatePicture: async (req, res) => {
 
     const image = (req.files[0] !== undefined) ? 'https://serveur.my-bakery.fr/users/images/' + req.files[0].filename : '',
@@ -1040,7 +1078,6 @@ module.exports = {
     })
 
   },
-
   userUpdate: async (req, res) => {
 
     const {

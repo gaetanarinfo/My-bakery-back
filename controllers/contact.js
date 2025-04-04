@@ -32,7 +32,6 @@ module.exports = {
         const phone = req.body.phone
         const sujet = req.body.sujet
         const message = req.body.content
-        const ip = req.ip.replace('::ffff:', '')
 
         const content = 'Bonjour Gaëtan,<br/><br>';
         const content2 = 'Récapitulatif des informations :<br/><br>';
@@ -62,15 +61,16 @@ module.exports = {
 
                 let error = true
                 res.json({
-                    error
+                    error,
+                    err
                 })
 
             } else {
 
                 let sql = `INSERT INTO contacts_history 
-                (firstname,lastname,email,phone,sujet,content,ip) 
+                (firstname,lastname,email,phone,sujet,content) 
                 VALUES 
-                ("${firstname}","${lastname}","${email}", "${phone}", "${sujet}", "${message}", "${ip}")`;
+                ("${firstname}","${lastname}","${email}", "${phone}", "${sujet}", "${message}")`;
 
 
                 db.query(sql, (err2, result) => {
@@ -78,7 +78,8 @@ module.exports = {
                     if (err2) {
                         let error = true
                         res.json({
-                            error
+                            error,
+                            err2
                         })
                     };
 

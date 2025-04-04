@@ -132,6 +132,12 @@ router.route('/list-search-bakery-clear')
 router.route('/bakery-search-place')
   .post(bakerys.searchPlace)
 
+// ---> Admin
+router.route('/bakerys-admin/:email')
+  .get(bakerys.getBakerysAdmin)
+router.route('/bakerys-admin-update')
+  .post(bakerys.updateBakeryAdmin)
+
 // Liste des articles du blog
 router.route('/blogs/:url')
   .get(blogs.getBlog)
@@ -159,25 +165,31 @@ router.route('/contact')
 // Sauvegarde de la newsletter
 router.route('/newsletter')
   .post(newsletter.post)
+router.route('/newsletter-send/:methode/:email')
+  .get(newsletter.send)
+router.route('/newsletter-admin/:email')
+  .get(newsletter.get)
+router.route('/newsletter-unsubscribe/:id')
+  .get(newsletter.unsubsribe)
 
 router.route('/favorites/:favorites')
   .get(favorites.get)
 
 // Google
-router.route('/villes-france')
-  .get(google_api.getAllCity)
-router.route('/google-local/:q')
-  .get(google_api.get)
+// router.route('/villes-france')
+//   .get(google_api.getAllCity)
+// router.route('/google-local/:q')
+//   .get(google_api.get)
 router.route('/google-local-place')
   .get(google_api.getPlace)
-router.route('/update-all-bakery')
-  .get(google_api.updateBakery)
-router.route('/auth/google/:plateforme')
-  .get(google_api.redirect)
-router.route('/auth/google-call/callback/:plateforme')
-  .get(google_api.callback)
-router.route('/auth/google/validate')
-  .post(google_api.validate)
+// router.route('/update-all-bakery')
+//   .get(google_api.updateBakery)
+// router.route('/auth/google/:plateforme')
+//   .get(google_api.redirect)
+// router.route('/auth/google-call/callback/:plateforme')
+//   .get(google_api.callback)
+// router.route('/auth/google/validate')
+//   .post(google_api.validate)
 
 
 // My account 
@@ -225,7 +237,7 @@ router.route('/update-profil')
   .post(account.userUpdate)
 
 // Footer
-router.route('/villes-france-home')
+router.route('/villes-france-home/:limit')
   .get(footer.villesFrance)
 
 // Bakerys Department

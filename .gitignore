@@ -4,4 +4,7 @@ privkey.pem
 server.cnf
 starter.sh
 /node_modules
+/public
+cert.pem
+chain.pem
 jwt.keys.json

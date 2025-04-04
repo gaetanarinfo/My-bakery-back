@@ -105,7 +105,7 @@ module.exports = {
     },
     getPlace: async (req, res) => {
 
-        let verif_bakery = `SELECT id, reference, title FROM bakerys ORDER BY id ASC`;
+        let verif_bakery = `SELECT id, reference, title FROM bakerys ORDER BY id ASC LIMIT 1`;
 
         db.query(verif_bakery, (error, data, fields) => {
 
@@ -207,264 +207,270 @@ module.exports = {
                                 // handicape = (response.data.result['wheelchair_accessible_entrance'] !== true) ? 0 : 1,
                                 // content = '<p>La Boulangerie ' + element.title.replace('Boulangerie & Restaurant Sandwicherie', '') + ' est bien plus qu\'une simple boulangerie, c\'est un véritable paradis pour les amateurs de délices cuits au four. Avec son savoir-faire artisanal et son engagement envers la qualité, cette boulangerie se distingue par ses produits exceptionnels.<br><br>Dès que vous franchissez la porte de ' + element.title.replace('Boulangerie & Restaurant Sandwicherie', '') + ', l\'odeur alléchante du pain fraîchement sorti du four vous enveloppe, éveillant immédiatement vos papilles gustatives. Les boulangers talentueux et passionnés y créent chaque jour une grande variété de pains, des traditionnels aux plus originaux, tous préparés avec des ingrédients de première qualité.<br><br>Mais ce n\'est pas tout ! La boulangerie ' + element.title.replace('Boulangerie & Restaurant Sandwicherie', '') + ' est également réputée pour ses viennoiseries délicieusement croustillantes et moelleuses à la fois. Croissants dorés, pains au chocolat fondants, brioches légères... chaque bouchée est un véritable régal.<br><br>Les pâtisseries de ' + element.title.replace('Boulangerie & Restaurant Sandwicherie', '') + ' méritent également d\'être mentionnées. Leurs gâteaux et tartes, préparés avec soin et créativité, sont de véritables œuvres d\'art sucrées. Que vous soyez tenté par un éclair au café, une tarte aux fruits de saison ou une mousse au chocolat onctueuse, vous serez conquis par les saveurs et la finesse des desserts proposés.<br><br>Outre la qualité irréprochable de ses produits, ' + element.title.replace('Boulangerie & Restaurant Sandwicherie', '') + ' se démarque également par son service chaleureux et attentif. Le personnel est toujours souriant et prêt à vous conseiller, garantissant ainsi une expérience agréable à chaque visite.<br><br>En résumé, la boulangerie ' + element.title.replace('Boulangerie & Restaurant Sandwicherie', '') + ' est bien plus qu\'une simple bonne boulangerie. C\'est un lieu où la passion pour la boulangerie se traduit par des créations savoureuses, une ambiance conviviale et un service exceptionnel. Une fois que vous aurez goûté à leurs produits, vous ne voudrez plus jamais vous passer de cette adresse incontournable.</p>',
                                 // small_content = 'La Boulangerie ' + element.title.replace('Boulangerie & Restaurant Sandwicherie', '') + ' est bien plus qu\'une simple boulangerie, c\'est un véritable paradis pour les amateurs de délices cuits au four.',
-                                // user_rating_google = (response.data.result['user_ratings_total'] !== undefined) ? response.data.result['user_ratings_total'] : 0,
-                                // total_rating_google = (response.data.result['rating'] !== undefined) ? response.data.result['rating'] : 0.0,
-                                var addHours1 = "",
-                                    addHours2 = "",
-                                    addHours3 = "",
-                                    addHours4 = "",
-                                    addHours5 = "",
-                                    addHours6 = "",
-                                    addHours7 = "",
-                                    addId = element.id
+                                var user_rating_google = (response.data.result['user_ratings_total'] !== undefined) ? response.data.result['user_ratings_total'] : 0,
+                                    total_rating_google = (response.data.result['rating'] !== undefined) ? response.data.result['rating'] : 0.0
 
-                                var hours = (response.data.result['opening_hours'] !== undefined) ? response.data.result['opening_hours']['weekday_text'] : null;
+                                var addId = element.id
+                                // addHours1 = "",
+                                // addHours2 = "",
+                                // addHours3 = "",
+                                // addHours4 = "",
+                                // addHours5 = "",
+                                // addHours6 = "",
+                                // addHours7 = ""                                
 
-                                if (hours !== null) {
+                                // var hours = (response.data.result['opening_hours'] !== undefined) ? response.data.result['opening_hours']['weekday_text'] : null;
 
-                                    hours.forEach(element => {
+                                // if (hours !== null) {
 
-                                        if (element.indexOf('Monday') !== -1) {
-                                            addHours1 = element.replace('Monday: ', 'De ')
-                                                .replaceAll('–', 'à')
-                                                .replaceAll('AM', '')
-                                                .replaceAll('PM', '')
-                                                .replace(',', ' et de')
-                                                .replace('De Closed', 'Fermé')
-                                                .replaceAll(':', 'h')
-                                                .replaceAll('  ', ' ')
-                                                .replaceAll('  ', ' ')
+                                //     hours.forEach(element => {
 
-                                                .replace('à 1', 'à 13')
-                                                .replace('à 2', 'à 14')
-                                                .replace('à 3', 'à 15')
-                                                .replace('à 4', 'à 16')
-                                                .replace('à 5', 'à 17')
-                                                .replace('à 6', 'à 18')
-                                                .replace('à 7', 'à 19')
-                                                .replace('à 8', 'à 20')
-                                                .replace('à 9', 'à 21')
+                                //         if (element.indexOf('Monday') !== -1) {
+                                //             addHours1 = element.replace('Monday: ', 'De ')
+                                //                 .replaceAll('–', 'à')
+                                //                 .replaceAll('AM', '')
+                                //                 .replaceAll('PM', '')
+                                //                 .replace(',', ' et de')
+                                //                 .replace('De Closed', 'Fermé')
+                                //                 .replaceAll(':', 'h')
+                                //                 .replaceAll('  ', ' ')
+                                //                 .replaceAll('  ', ' ')
 
-                                                .replace(' et de 1', ' et de 13')
-                                                .replace(' et de 2', ' et de 14')
-                                                .replace(' et de 3', ' et de 15')
-                                                .replace(' et de 4', ' et de 16')
-                                                .replace(' et de 5', ' et de 17')
-                                                .replace(' et de 6', ' et de 18')
-                                                .replace(' et de 7', ' et de 19')
-                                                .replace(' et de 8', ' et de 20')
-                                                .replace(' et de 9', ' et de 21')
+                                //                 .replace('à 1', 'à 13')
+                                //                 .replace('à 2', 'à 14')
+                                //                 .replace('à 3', 'à 15')
+                                //                 .replace('à 4', 'à 16')
+                                //                 .replace('à 5', 'à 17')
+                                //                 .replace('à 6', 'à 18')
+                                //                 .replace('à 7', 'à 19')
+                                //                 .replace('à 8', 'à 20')
+                                //                 .replace('à 9', 'à 21')
 
-                                                .trim();
-                                        }
+                                //                 .replace(' et de 1', ' et de 13')
+                                //                 .replace(' et de 2', ' et de 14')
+                                //                 .replace(' et de 3', ' et de 15')
+                                //                 .replace(' et de 4', ' et de 16')
+                                //                 .replace(' et de 5', ' et de 17')
+                                //                 .replace(' et de 6', ' et de 18')
+                                //                 .replace(' et de 7', ' et de 19')
+                                //                 .replace(' et de 8', ' et de 20')
+                                //                 .replace(' et de 9', ' et de 21')
 
-                                        if (element.indexOf('Tuesday') !== -1) {
-                                            addHours2 = element.replace('Tuesday: ', 'De ')
-                                                .replaceAll('–', 'à')
-                                                .replaceAll('AM', '')
-                                                .replaceAll('PM', '')
-                                                .replace(',', ' et de')
-                                                .replace('De Closed', 'Fermé')
-                                                .replaceAll(':', 'h')
-                                                .replaceAll('  ', ' ')
-                                                .replaceAll('  ', ' ')
+                                //                 .trim();
+                                //         }
 
-                                                .replace('à 1', 'à 13')
-                                                .replace('à 2', 'à 14')
-                                                .replace('à 3', 'à 15')
-                                                .replace('à 4', 'à 16')
-                                                .replace('à 5', 'à 17')
-                                                .replace('à 6', 'à 18')
-                                                .replace('à 7', 'à 19')
-                                                .replace('à 8', 'à 20')
-                                                .replace('à 9', 'à 21')
+                                //         if (element.indexOf('Tuesday') !== -1) {
+                                //             addHours2 = element.replace('Tuesday: ', 'De ')
+                                //                 .replaceAll('–', 'à')
+                                //                 .replaceAll('AM', '')
+                                //                 .replaceAll('PM', '')
+                                //                 .replace(',', ' et de')
+                                //                 .replace('De Closed', 'Fermé')
+                                //                 .replaceAll(':', 'h')
+                                //                 .replaceAll('  ', ' ')
+                                //                 .replaceAll('  ', ' ')
 
-                                                .replace(' et de 1', ' et de 13')
-                                                .replace(' et de 2', ' et de 14')
-                                                .replace(' et de 3', ' et de 15')
-                                                .replace(' et de 4', ' et de 16')
-                                                .replace(' et de 5', ' et de 17')
-                                                .replace(' et de 6', ' et de 18')
-                                                .replace(' et de 7', ' et de 19')
-                                                .replace(' et de 8', ' et de 20')
-                                                .replace(' et de 9', ' et de 21')
+                                //                 .replace('à 1', 'à 13')
+                                //                 .replace('à 2', 'à 14')
+                                //                 .replace('à 3', 'à 15')
+                                //                 .replace('à 4', 'à 16')
+                                //                 .replace('à 5', 'à 17')
+                                //                 .replace('à 6', 'à 18')
+                                //                 .replace('à 7', 'à 19')
+                                //                 .replace('à 8', 'à 20')
+                                //                 .replace('à 9', 'à 21')
 
-                                                .trim();
-                                        }
+                                //                 .replace(' et de 1', ' et de 13')
+                                //                 .replace(' et de 2', ' et de 14')
+                                //                 .replace(' et de 3', ' et de 15')
+                                //                 .replace(' et de 4', ' et de 16')
+                                //                 .replace(' et de 5', ' et de 17')
+                                //                 .replace(' et de 6', ' et de 18')
+                                //                 .replace(' et de 7', ' et de 19')
+                                //                 .replace(' et de 8', ' et de 20')
+                                //                 .replace(' et de 9', ' et de 21')
 
-                                        if (element.indexOf('Wednesday') !== -1) {
-                                            addHours3 = element.replace('Wednesday: ', 'De ')
-                                                .replaceAll('–', 'à')
-                                                .replaceAll('AM', '')
-                                                .replaceAll('PM', '')
-                                                .replace(',', ' et de')
-                                                .replace('De Closed', 'Fermé')
-                                                .replaceAll(':', 'h')
-                                                .replaceAll('  ', ' ')
-                                                .replaceAll('  ', ' ')
+                                //                 .trim();
+                                //         }
 
-                                                .replace('à 1', 'à 13')
-                                                .replace('à 2', 'à 14')
-                                                .replace('à 3', 'à 15')
-                                                .replace('à 4', 'à 16')
-                                                .replace('à 5', 'à 17')
-                                                .replace('à 6', 'à 18')
-                                                .replace('à 7', 'à 19')
-                                                .replace('à 8', 'à 20')
-                                                .replace('à 9', 'à 21')
+                                //         if (element.indexOf('Wednesday') !== -1) {
+                                //             addHours3 = element.replace('Wednesday: ', 'De ')
+                                //                 .replaceAll('–', 'à')
+                                //                 .replaceAll('AM', '')
+                                //                 .replaceAll('PM', '')
+                                //                 .replace(',', ' et de')
+                                //                 .replace('De Closed', 'Fermé')
+                                //                 .replaceAll(':', 'h')
+                                //                 .replaceAll('  ', ' ')
+                                //                 .replaceAll('  ', ' ')
 
-                                                .replace(' et de 1', ' et de 13')
-                                                .replace(' et de 2', ' et de 14')
-                                                .replace(' et de 3', ' et de 15')
-                                                .replace(' et de 4', ' et de 16')
-                                                .replace(' et de 5', ' et de 17')
-                                                .replace(' et de 6', ' et de 18')
-                                                .replace(' et de 7', ' et de 19')
-                                                .replace(' et de 8', ' et de 20')
-                                                .replace(' et de 9', ' et de 21')
+                                //                 .replace('à 1', 'à 13')
+                                //                 .replace('à 2', 'à 14')
+                                //                 .replace('à 3', 'à 15')
+                                //                 .replace('à 4', 'à 16')
+                                //                 .replace('à 5', 'à 17')
+                                //                 .replace('à 6', 'à 18')
+                                //                 .replace('à 7', 'à 19')
+                                //                 .replace('à 8', 'à 20')
+                                //                 .replace('à 9', 'à 21')
 
-                                                .trim();
-                                        }
+                                //                 .replace(' et de 1', ' et de 13')
+                                //                 .replace(' et de 2', ' et de 14')
+                                //                 .replace(' et de 3', ' et de 15')
+                                //                 .replace(' et de 4', ' et de 16')
+                                //                 .replace(' et de 5', ' et de 17')
+                                //                 .replace(' et de 6', ' et de 18')
+                                //                 .replace(' et de 7', ' et de 19')
+                                //                 .replace(' et de 8', ' et de 20')
+                                //                 .replace(' et de 9', ' et de 21')
 
-                                        if (element.indexOf('Thursday') !== -1) {
-                                            addHours4 = element.replace('Thursday: ', 'De ')
-                                                .replaceAll('–', 'à')
-                                                .replaceAll('AM', '')
-                                                .replaceAll('PM', '')
-                                                .replace(',', ' et de')
-                                                .replace('De Closed', 'Fermé')
-                                                .replaceAll(':', 'h')
-                                                .replaceAll('  ', ' ')
-                                                .replaceAll('  ', ' ')
+                                //                 .trim();
+                                //         }
 
-                                                .replace('à 1', 'à 13')
-                                                .replace('à 2', 'à 14')
-                                                .replace('à 3', 'à 15')
-                                                .replace('à 4', 'à 16')
-                                                .replace('à 5', 'à 17')
-                                                .replace('à 6', 'à 18')
-                                                .replace('à 7', 'à 19')
-                                                .replace('à 8', 'à 20')
-                                                .replace('à 9', 'à 21')
+                                //         if (element.indexOf('Thursday') !== -1) {
+                                //             addHours4 = element.replace('Thursday: ', 'De ')
+                                //                 .replaceAll('–', 'à')
+                                //                 .replaceAll('AM', '')
+                                //                 .replaceAll('PM', '')
+                                //                 .replace(',', ' et de')
+                                //                 .replace('De Closed', 'Fermé')
+                                //                 .replaceAll(':', 'h')
+                                //                 .replaceAll('  ', ' ')
+                                //                 .replaceAll('  ', ' ')
 
-                                                .replace(' et de 1', ' et de 13')
-                                                .replace(' et de 2', ' et de 14')
-                                                .replace(' et de 3', ' et de 15')
-                                                .replace(' et de 4', ' et de 16')
-                                                .replace(' et de 5', ' et de 17')
-                                                .replace(' et de 6', ' et de 18')
-                                                .replace(' et de 7', ' et de 19')
-                                                .replace(' et de 8', ' et de 20')
-                                                .replace(' et de 9', ' et de 21')
+                                //                 .replace('à 1', 'à 13')
+                                //                 .replace('à 2', 'à 14')
+                                //                 .replace('à 3', 'à 15')
+                                //                 .replace('à 4', 'à 16')
+                                //                 .replace('à 5', 'à 17')
+                                //                 .replace('à 6', 'à 18')
+                                //                 .replace('à 7', 'à 19')
+                                //                 .replace('à 8', 'à 20')
+                                //                 .replace('à 9', 'à 21')
 
-                                                .trim();
-                                        }
+                                //                 .replace(' et de 1', ' et de 13')
+                                //                 .replace(' et de 2', ' et de 14')
+                                //                 .replace(' et de 3', ' et de 15')
+                                //                 .replace(' et de 4', ' et de 16')
+                                //                 .replace(' et de 5', ' et de 17')
+                                //                 .replace(' et de 6', ' et de 18')
+                                //                 .replace(' et de 7', ' et de 19')
+                                //                 .replace(' et de 8', ' et de 20')
+                                //                 .replace(' et de 9', ' et de 21')
 
-                                        if (element.indexOf('Friday') !== -1) {
-                                            addHours5 = element.replace('Friday: ', 'De ')
-                                                .replaceAll('–', 'à')
-                                                .replaceAll('AM', '')
-                                                .replaceAll('PM', '')
-                                                .replace(',', ' et de')
-                                                .replace('De Closed', 'Fermé')
-                                                .replaceAll(':', 'h')
-                                                .replaceAll('  ', ' ')
-                                                .replaceAll('  ', ' ')
+                                //                 .trim();
+                                //         }
 
-                                                .replace('à 1', 'à 13')
-                                                .replace('à 2', 'à 14')
-                                                .replace('à 3', 'à 15')
-                                                .replace('à 4', 'à 16')
-                                                .replace('à 5', 'à 17')
-                                                .replace('à 6', 'à 18')
-                                                .replace('à 7', 'à 19')
-                                                .replace('à 8', 'à 20')
-                                                .replace('à 9', 'à 21')
+                                //         if (element.indexOf('Friday') !== -1) {
+                                //             addHours5 = element.replace('Friday: ', 'De ')
+                                //                 .replaceAll('–', 'à')
+                                //                 .replaceAll('AM', '')
+                                //                 .replaceAll('PM', '')
+                                //                 .replace(',', ' et de')
+                                //                 .replace('De Closed', 'Fermé')
+                                //                 .replaceAll(':', 'h')
+                                //                 .replaceAll('  ', ' ')
+                                //                 .replaceAll('  ', ' ')
 
-                                                .replace(' et de 1', ' et de 13')
-                                                .replace(' et de 2', ' et de 14')
-                                                .replace(' et de 3', ' et de 15')
-                                                .replace(' et de 4', ' et de 16')
-                                                .replace(' et de 5', ' et de 17')
-                                                .replace(' et de 6', ' et de 18')
-                                                .replace(' et de 7', ' et de 19')
-                                                .replace(' et de 8', ' et de 20')
-                                                .replace(' et de 9', ' et de 21')
+                                //                 .replace('à 1', 'à 13')
+                                //                 .replace('à 2', 'à 14')
+                                //                 .replace('à 3', 'à 15')
+                                //                 .replace('à 4', 'à 16')
+                                //                 .replace('à 5', 'à 17')
+                                //                 .replace('à 6', 'à 18')
+                                //                 .replace('à 7', 'à 19')
+                                //                 .replace('à 8', 'à 20')
+                                //                 .replace('à 9', 'à 21')
 
-                                                .trim();
-                                        }
+                                //                 .replace(' et de 1', ' et de 13')
+                                //                 .replace(' et de 2', ' et de 14')
+                                //                 .replace(' et de 3', ' et de 15')
+                                //                 .replace(' et de 4', ' et de 16')
+                                //                 .replace(' et de 5', ' et de 17')
+                                //                 .replace(' et de 6', ' et de 18')
+                                //                 .replace(' et de 7', ' et de 19')
+                                //                 .replace(' et de 8', ' et de 20')
+                                //                 .replace(' et de 9', ' et de 21')
 
-                                        if (element.indexOf('Saturday') !== -1) {
-                                            addHours6 = element.replace('Saturday: ', 'De ')
-                                                .replaceAll('–', 'à')
-                                                .replaceAll('AM', '')
-                                                .replaceAll('PM', '')
-                                                .replace(',', ' et de')
-                                                .replace('De Closed', 'Fermé')
-                                                .replaceAll(':', 'h')
-                                                .replaceAll('  ', ' ')
-                                                .replaceAll('  ', ' ')
+                                //                 .trim();
+                                //         }
 
-                                                .replace('à 1', 'à 13')
-                                                .replace('à 2', 'à 14')
-                                                .replace('à 3', 'à 15')
-                                                .replace('à 4', 'à 16')
-                                                .replace('à 5', 'à 17')
-                                                .replace('à 6', 'à 18')
-                                                .replace('à 7', 'à 19')
-                                                .replace('à 8', 'à 20')
-                                                .replace('à 9', 'à 21')
+                                //         if (element.indexOf('Saturday') !== -1) {
+                                //             addHours6 = element.replace('Saturday: ', 'De ')
+                                //                 .replaceAll('–', 'à')
+                                //                 .replaceAll('AM', '')
+                                //                 .replaceAll('PM', '')
+                                //                 .replace(',', ' et de')
+                                //                 .replace('De Closed', 'Fermé')
+                                //                 .replaceAll(':', 'h')
+                                //                 .replaceAll('  ', ' ')
+                                //                 .replaceAll('  ', ' ')
 
-                                                .replace(' et de 1', ' et de 13')
-                                                .replace(' et de 2', ' et de 14')
-                                                .replace(' et de 3', ' et de 15')
-                                                .replace(' et de 4', ' et de 16')
-                                                .replace(' et de 5', ' et de 17')
-                                                .replace(' et de 6', ' et de 18')
-                                                .replace(' et de 7', ' et de 19')
-                                                .replace(' et de 8', ' et de 20')
-                                                .replace(' et de 9', ' et de 21')
+                                //                 .replace('à 1', 'à 13')
+                                //                 .replace('à 2', 'à 14')
+                                //                 .replace('à 3', 'à 15')
+                                //                 .replace('à 4', 'à 16')
+                                //                 .replace('à 5', 'à 17')
+                                //                 .replace('à 6', 'à 18')
+                                //                 .replace('à 7', 'à 19')
+                                //                 .replace('à 8', 'à 20')
+                                //                 .replace('à 9', 'à 21')
 
-                                                .trim();
-                                        }
+                                //                 .replace(' et de 1', ' et de 13')
+                                //                 .replace(' et de 2', ' et de 14')
+                                //                 .replace(' et de 3', ' et de 15')
+                                //                 .replace(' et de 4', ' et de 16')
+                                //                 .replace(' et de 5', ' et de 17')
+                                //                 .replace(' et de 6', ' et de 18')
+                                //                 .replace(' et de 7', ' et de 19')
+                                //                 .replace(' et de 8', ' et de 20')
+                                //                 .replace(' et de 9', ' et de 21')
 
-                                        if (element.indexOf('Sunday') !== -1) {
-                                            addHours7 = element.replace('Sunday: ', 'De ')
-                                                .replaceAll('–', 'à')
-                                                .replaceAll('AM', '')
-                                                .replaceAll('PM', '')
-                                                .replace(',', ' et de')
-                                                .replace('De Closed', 'Fermé')
-                                                .replaceAll(':', 'h')
-                                                .replaceAll('  ', ' ')
-                                                .replaceAll('  ', ' ')
+                                //                 .trim();
+                                //         }
 
-                                                .replace('à 1', 'à 13')
-                                                .replace('à 2', 'à 14')
-                                                .replace('à 3', 'à 15')
-                                                .replace('à 4', 'à 16')
-                                                .replace('à 5', 'à 17')
-                                                .replace('à 6', 'à 18')
-                                                .replace('à 7', 'à 19')
-                                                .replace('à 8', 'à 20')
-                                                .replace('à 9', 'à 21')
+                                //         if (element.indexOf('Sunday') !== -1) {
+                                //             addHours7 = element.replace('Sunday: ', 'De ')
+                                //                 .replaceAll('–', 'à')
+                                //                 .replaceAll('AM', '')
+                                //                 .replaceAll('PM', '')
+                                //                 .replace(',', ' et de')
+                                //                 .replace('De Closed', 'Fermé')
+                                //                 .replaceAll(':', 'h')
+                                //                 .replaceAll('  ', ' ')
+                                //                 .replaceAll('  ', ' ')
 
-                                                .replace(' et de 1', ' et de 13')
-                                                .replace(' et de 2', ' et de 14')
-                                                .replace(' et de 3', ' et de 15')
-                                                .replace(' et de 4', ' et de 16')
-                                                .replace(' et de 5', ' et de 17')
-                                                .replace(' et de 6', ' et de 18')
-                                                .replace(' et de 7', ' et de 19')
-                                                .replace(' et de 8', ' et de 20')
-                                                .replace(' et de 9', ' et de 21')
+                                //                 .replace('à 1', 'à 13')
+                                //                 .replace('à 2', 'à 14')
+                                //                 .replace('à 3', 'à 15')
+                                //                 .replace('à 4', 'à 16')
+                                //                 .replace('à 5', 'à 17')
+                                //                 .replace('à 6', 'à 18')
+                                //                 .replace('à 7', 'à 19')
+                                //                 .replace('à 8', 'à 20')
+                                //                 .replace('à 9', 'à 21')
 
-                                                .trim();
-                                        }
+                                //                 .replace(' et de 1', ' et de 13')
+                                //                 .replace(' et de 2', ' et de 14')
+                                //                 .replace(' et de 3', ' et de 15')
+                                //                 .replace(' et de 4', ' et de 16')
+                                //                 .replace(' et de 5', ' et de 17')
+                                //                 .replace(' et de 6', ' et de 18')
+                                //                 .replace(' et de 7', ' et de 19')
+                                //                 .replace(' et de 8', ' et de 20')
+                                //                 .replace(' et de 9', ' et de 21')
 
-                                    });
+                                //                 .trim();
+                                //         }
 
-                                }
+                                //     });
+
+                                // }
+
+                                var update3 = `UPDATE bakerys SET 
+                                     user_rating_google = ${user_rating_google},
+                                     total_rating_google = ${total_rating_google}
+                                     WHERE reference = "${element.reference}"`
 
                                 // var update3 = `UPDATE bakerys SET 
                                 //     lat = "${lat}", 
@@ -485,217 +491,217 @@ module.exports = {
 
                                 // Mise à jour des heures 1 à 7
 
-                                if (hours !== null) {
+                                // if (hours !== null) {
 
-                                    let sqlHours1 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Lundi" LIMIT 1`;
-                                    db.query(sqlHours1, (error, data, fields) => {
+                                //     let sqlHours1 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Lundi" LIMIT 1`;
+                                //     db.query(sqlHours1, (error, data, fields) => {
 
-                                        if (data.length >= 1) {
+                                //         if (data.length >= 1) {
 
-                                            var update = `UPDATE bakerys_hours SET am = "${addHours1}" WHERE bakery_id = "${addId}" AND date = "Lundi"`
-                                            db.query(update, (error, data, fields) => { console.log(error); })
+                                //             var update = `UPDATE bakerys_hours SET am = "${addHours1}" WHERE bakery_id = "${addId}" AND date = "Lundi"`
+                                //             db.query(update, (error, data, fields) => { console.log(error); })
 
-                                        } else {
+                                //         } else {
 
-                                            let sql = `INSERT INTO bakerys_hours 
-                                        (
-                                            bakery_id,
-                                            date,
-                                            am
-                                        ) VALUES (
-                                            "${addId}",
-                                            "Lundi",
-                                            "${addHours1}"
-                                            )`;
+                                //             let sql = `INSERT INTO bakerys_hours 
+                                //         (
+                                //             bakery_id,
+                                //             date,
+                                //             am
+                                //         ) VALUES (
+                                //             "${addId}",
+                                //             "Lundi",
+                                //             "${addHours1}"
+                                //             )`;
 
-                                            db.query(sql, (error2, result2) => {
-                                            })
+                                //             db.query(sql, (error2, result2) => {
+                                //             })
 
-                                        }
+                                //         }
 
-                                    })
+                                //     })
 
-                                    //
+                                //     //
 
-                                    let sqlHours2 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Mardi" LIMIT 1`;
-                                    db.query(sqlHours2, (error, data, fields) => {
+                                //     let sqlHours2 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Mardi" LIMIT 1`;
+                                //     db.query(sqlHours2, (error, data, fields) => {
 
-                                        if (data.length >= 1) {
+                                //         if (data.length >= 1) {
 
-                                            var update = `UPDATE bakerys_hours SET am = "${addHours2}" WHERE bakery_id = "${addId}" AND date = "Mardi"`
-                                            db.query(update, (error, data, fields) => { console.log(error); })
+                                //             var update = `UPDATE bakerys_hours SET am = "${addHours2}" WHERE bakery_id = "${addId}" AND date = "Mardi"`
+                                //             db.query(update, (error, data, fields) => { console.log(error); })
 
-                                        } else {
+                                //         } else {
 
-                                            let sql = `INSERT INTO bakerys_hours 
-                                (
-                                    bakery_id,
-                                    date,
-                                    am
-                                ) VALUES (
-                                    "${addId}",
-                                    "Mardi",
-                                    "${addHours2}"
-                                    )`;
+                                //             let sql = `INSERT INTO bakerys_hours 
+                                // (
+                                //     bakery_id,
+                                //     date,
+                                //     am
+                                // ) VALUES (
+                                //     "${addId}",
+                                //     "Mardi",
+                                //     "${addHours2}"
+                                //     )`;
 
-                                            db.query(sql, (error2, result2) => {
-                                            })
+                                //             db.query(sql, (error2, result2) => {
+                                //             })
 
-                                        }
+                                //         }
 
-                                    })
+                                //     })
 
-                                    //
+                                //     //
 
-                                    let sqlHours3 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Mercredi" LIMIT 1`;
-                                    db.query(sqlHours3, (error, data, fields) => {
+                                //     let sqlHours3 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Mercredi" LIMIT 1`;
+                                //     db.query(sqlHours3, (error, data, fields) => {
 
-                                        if (data.length >= 1) {
+                                //         if (data.length >= 1) {
 
-                                            var update = `UPDATE bakerys_hours SET am = "${addHours3}" WHERE bakery_id = "${addId}" AND date = "Mercredi"`
-                                            db.query(update, (error, data, fields) => { console.log(error); })
+                                //             var update = `UPDATE bakerys_hours SET am = "${addHours3}" WHERE bakery_id = "${addId}" AND date = "Mercredi"`
+                                //             db.query(update, (error, data, fields) => { console.log(error); })
 
-                                        } else {
+                                //         } else {
 
-                                            let sql = `INSERT INTO bakerys_hours 
-                                (
-                                    bakery_id,
-                                    date,
-                                    am
-                                ) VALUES (
-                                    "${addId}",
-                                    "Mercredi",
-                                    "${addHours3}"
-                                    )`;
+                                //             let sql = `INSERT INTO bakerys_hours 
+                                // (
+                                //     bakery_id,
+                                //     date,
+                                //     am
+                                // ) VALUES (
+                                //     "${addId}",
+                                //     "Mercredi",
+                                //     "${addHours3}"
+                                //     )`;
 
-                                            db.query(sql, (error2, result2) => {
-                                            })
+                                //             db.query(sql, (error2, result2) => {
+                                //             })
 
-                                        }
+                                //         }
 
-                                    })
+                                //     })
 
-                                    //
+                                //     //
 
-                                    let sqlHours4 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Jeudi" LIMIT 1`;
-                                    db.query(sqlHours4, (error, data, fields) => {
+                                //     let sqlHours4 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Jeudi" LIMIT 1`;
+                                //     db.query(sqlHours4, (error, data, fields) => {
 
-                                        if (data.length >= 1) {
+                                //         if (data.length >= 1) {
 
-                                            var update = `UPDATE bakerys_hours SET am = "${addHours4}" WHERE bakery_id = "${addId}" AND date = "Jeudi"`
-                                            db.query(update, (error, data, fields) => { console.log(error); })
+                                //             var update = `UPDATE bakerys_hours SET am = "${addHours4}" WHERE bakery_id = "${addId}" AND date = "Jeudi"`
+                                //             db.query(update, (error, data, fields) => { console.log(error); })
 
-                                        } else {
+                                //         } else {
 
-                                            let sql = `INSERT INTO bakerys_hours 
-                                (
-                                    bakery_id,
-                                    date,
-                                    am
-                                ) VALUES (
-                                    "${addId}",
-                                    "Jeudi",
-                                    "${addHours4}"
-                                    )`;
+                                //             let sql = `INSERT INTO bakerys_hours 
+                                // (
+                                //     bakery_id,
+                                //     date,
+                                //     am
+                                // ) VALUES (
+                                //     "${addId}",
+                                //     "Jeudi",
+                                //     "${addHours4}"
+                                //     )`;
 
-                                            db.query(sql, (error2, result2) => {
-                                            })
+                                //             db.query(sql, (error2, result2) => {
+                                //             })
 
-                                        }
+                                //         }
 
-                                    })
+                                //     })
 
-                                    //
+                                //     //
 
-                                    let sqlHours5 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Vendredi" LIMIT 1`;
-                                    db.query(sqlHours5, (error, data, fields) => {
+                                //     let sqlHours5 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Vendredi" LIMIT 1`;
+                                //     db.query(sqlHours5, (error, data, fields) => {
 
-                                        if (data.length >= 1) {
+                                //         if (data.length >= 1) {
 
-                                            var update = `UPDATE bakerys_hours SET am = "${addHours5}" WHERE bakery_id = "${addId}" AND date = "Vendredi"`
-                                            db.query(update, (error, data, fields) => { console.log(error); })
+                                //             var update = `UPDATE bakerys_hours SET am = "${addHours5}" WHERE bakery_id = "${addId}" AND date = "Vendredi"`
+                                //             db.query(update, (error, data, fields) => { console.log(error); })
 
-                                        } else {
+                                //         } else {
 
-                                            let sql = `INSERT INTO bakerys_hours 
-                                (
-                                    bakery_id,
-                                    date,
-                                    am
-                                ) VALUES (
-                                    "${addId}",
-                                    "Vendredi",
-                                    "${addHours5}"
-                                    )`;
+                                //             let sql = `INSERT INTO bakerys_hours 
+                                // (
+                                //     bakery_id,
+                                //     date,
+                                //     am
+                                // ) VALUES (
+                                //     "${addId}",
+                                //     "Vendredi",
+                                //     "${addHours5}"
+                                //     )`;
 
-                                            db.query(sql, (error2, result2) => {
-                                            })
+                                //             db.query(sql, (error2, result2) => {
+                                //             })
 
-                                        }
+                                //         }
 
-                                    })
+                                //     })
 
-                                    //
+                                //     //
 
-                                    let sqlHours6 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Samedi" LIMIT 1`;
-                                    db.query(sqlHours6, (error, data, fields) => {
+                                //     let sqlHours6 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Samedi" LIMIT 1`;
+                                //     db.query(sqlHours6, (error, data, fields) => {
 
-                                        if (data.length >= 1) {
+                                //         if (data.length >= 1) {
 
-                                            var update = `UPDATE bakerys_hours SET am = "${addHours6}" WHERE bakery_id = "${addId}" AND date = "Samedi"`
-                                            db.query(update, (error, data, fields) => { console.log(error); })
+                                //             var update = `UPDATE bakerys_hours SET am = "${addHours6}" WHERE bakery_id = "${addId}" AND date = "Samedi"`
+                                //             db.query(update, (error, data, fields) => { console.log(error); })
 
-                                        } else {
+                                //         } else {
 
-                                            let sql = `INSERT INTO bakerys_hours 
-                                (
-                                    bakery_id,
-                                    date,
-                                    am
-                                ) VALUES (
-                                    "${addId}",
-                                    "Samedi",
-                                    "${addHours6}"
-                                    )`;
+                                //             let sql = `INSERT INTO bakerys_hours 
+                                // (
+                                //     bakery_id,
+                                //     date,
+                                //     am
+                                // ) VALUES (
+                                //     "${addId}",
+                                //     "Samedi",
+                                //     "${addHours6}"
+                                //     )`;
 
-                                            db.query(sql, (error2, result2) => {
-                                            })
+                                //             db.query(sql, (error2, result2) => {
+                                //             })
 
-                                        }
+                                //         }
 
-                                    })
+                                //     })
 
-                                    //
+                                //     //
 
-                                    let sqlHours7 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Dimanche" LIMIT 1`;
-                                    db.query(sqlHours7, (error, data, fields) => {
+                                //     let sqlHours7 = `SELECT * FROM bakerys_hours WHERE bakery_id = "${addId}" AND date = "Dimanche" LIMIT 1`;
+                                //     db.query(sqlHours7, (error, data, fields) => {
 
-                                        if (data.length >= 1) {
+                                //         if (data.length >= 1) {
 
-                                            var update = `UPDATE bakerys_hours SET am = "${addHours7}" WHERE bakery_id = "${addId}" AND date = "Dimanche"`
-                                            db.query(update, (error, data, fields) => { console.log(error); })
+                                //             var update = `UPDATE bakerys_hours SET am = "${addHours7}" WHERE bakery_id = "${addId}" AND date = "Dimanche"`
+                                //             db.query(update, (error, data, fields) => { console.log(error); })
 
-                                        } else {
+                                //         } else {
 
-                                            let sql = `INSERT INTO bakerys_hours 
-                                (
-                                    bakery_id,
-                                    date,
-                                    am
-                                ) VALUES (
-                                    "${addId}",
-                                    "Dimanche",
-                                    "${addHours7}"
-                                    )`;
+                                //             let sql = `INSERT INTO bakerys_hours 
+                                // (
+                                //     bakery_id,
+                                //     date,
+                                //     am
+                                // ) VALUES (
+                                //     "${addId}",
+                                //     "Dimanche",
+                                //     "${addHours7}"
+                                //     )`;
 
-                                            db.query(sql, (error2, result2) => {
-                                            })
+                                //             db.query(sql, (error2, result2) => {
+                                //             })
 
-                                        }
+                                //         }
 
-                                    })
+                                //     })
 
-                                }
+                                // }
 
                                 //
 
@@ -879,7 +885,6 @@ module.exports = {
         })
 
     },
-
     redirect: async (req, res) => {
 
         var { plateforme } = req.params,
@@ -895,7 +900,6 @@ module.exports = {
         res.redirect(url);
 
     },
-
     callback: async (req, res) => {
 
         const { code } = req.query;
@@ -997,7 +1001,6 @@ module.exports = {
         }
 
     },
-
     validate: async (req, res) => {
 
         const { token } = req.body

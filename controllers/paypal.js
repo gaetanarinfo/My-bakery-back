@@ -31,8 +31,14 @@ const GOOGLE_PRIVATE_KEY = process.env.private_key,
   auth = new google.auth.GoogleAuth({
     keyFile: "./jwt.keys.json",
     scopes: SCOPES,
-  });
+  })
 
+/*
+* Import Mailer
+****************/
+const header = require('./mailer/header'),
+  body = require('./mailer/body'),
+  footer = require('./mailer/footer')
 
 // Déclaration de notre transporter
 // C'est en quelque sorte notre connexion à notre boite mail
@@ -242,8 +248,6 @@ module.exports = {
 
     const { orderId } = req.params
 
-    console.log(orderId)
-
     const token = await axios.post(
       process.env.PAYPAL_ADRESSE_TOKEN,
       new URLSearchParams({
@@ -346,7 +350,7 @@ module.exports = {
                           banner_square_name = data2[0].banner_square_name,
                           dateStart = moment(data2[0].dateStart).format('DD MMMM YYYY'),
                           dateEnd = moment(data2[0].dateEnd).format('DD MMMM YYYY'),
-                          title = '<strong>Campagne publicitaire n°' + campaign_id + '</strong><br/>' + '<strong>De ' + data2[0].firstname + ' ' + data2[0].lastname + '</strong><br/>' + '<strong>Du ' + dateStart + ' au ' + dateEnd + '</strong>'
+                          title = '<strong>Campagne publicitaire n°' + campaign_id + '</strong>' + '<strong>De ' + data2[0].firstname + ' ' + data2[0].lastname + '</strong>' + '<strong>Du ' + dateStart + ' au ' + dateEnd + '</strong>'
 
                         let sqlinsertEvents = `INSERT INTO bakerys_events (
                           campaign_id,
@@ -440,11 +444,11 @@ module.exports = {
                       var update = `UPDATE users SET credits = credits + ${data2[0].credits} WHERE id = ${data2[0].user_id}`
                       db.query(update, (error, data, fields) => { console.log(error) })
 
-                      const content = 'Bonjour ' + data2[0].firstname + ',<br/><br>';
-                      const content2 = 'Récapitulatif de votre commande :<br/><br>';
-                      const content3 = 'Votre pack : <strong>' + data2[0].titleProduct + '</strong><br/>';
-                      const content4 = 'Contenu de votre pack : <br/><strong>' + data2[0].content_paypal + '</strong><br/>';
-                      const content5 = 'Quantité* : <strong>' + data2[0].qte + '</strong><br/>';
+                      const content = 'Bonjour ' + data2[0].firstname + ',<br>';
+                      const content2 = 'Récapitulatif de votre commande :<br>';
+                      const content3 = 'Votre pack : <strong>' + data2[0].titleProduct + '</strong>';
+                      const content4 = 'Contenu de votre pack : <strong>' + data2[0].content_paypal + '</strong>';
+                      const content5 = 'Quantité* : <strong>' + data2[0].qte + '</strong>';
 
                       var content5_5 = ''
                       var content5_5_5 = ''
@@ -452,24 +456,26 @@ module.exports = {
                       var content8_8 = ''
 
                       if (Number(data2[0].product_id) >= 3) {
-                        content5_5 = 'Durée d\'affichage votre campagne de bannière : <strong>' + (Number(moment(dateE).add(1, 'days').diff(moment(dateS), "days"))) + '</strong><br/>';
+                        content5_5 = 'Durée d\'affichage de votre campagne de bannière : <strong>' + (Number(moment(dateE).add(1, 'days').diff(moment(dateS), "days"))) + ' jours</strong>';
                         content5_5_5 = 'Surplus  journalier pour votre campagne : <strong>' + (Number(moment(dateE).add(1, 'days').diff(moment(dateS), "days")) - 7) *
-                          parseFloat(0.25).toFixed(2) + ' € HT</strong><br/>';
-                        content6_6 = 'Surplus total journalier pour votre campagne : <strong>' + day_supplement + ' € TTC</strong><br/>';
+                          parseFloat(0.25).toFixed(2) + ' € HT</strong>';
+                        content6_6 = 'Surplus total journalier pour votre campagne : <strong>' + day_supplement + ' € TTC</strong>';
                       }
 
-                      const content6 = 'Prix HT : <strong>' + data2[0].total_ht + ' €</strong><br/>';
-                      const content7 = 'Prix TTC : <strong>' + data2[0].total_ttc + ' €</strong><br/>';
-                      const content8 = 'Total de votre commande : <strong>' + data2[0].total_ttc + ' €</strong><br/><br/>';
+                      const content6 = 'Prix HT : <strong>' + data2[0].total_ht + ' €</strong>';
+                      const content7 = 'Prix TTC : <strong>' + data2[0].total_ttc + ' €</strong>';
+                      const content8 = 'Total de votre commande : <strong>' + data2[0].total_ttc + ' €</strong>';
 
                       if (Number(data2[0].product_id) >= 3) {
-                        content8_8 = 'Votre campagne publicitaire sera active à la date que vous avez choisie, vous n\'avez donc rien à faire.<br/><br/>';
+                        content8_8 = 'Votre campagne publicitaire sera active à la date que vous avez choisie, vous n\'avez donc rien à faire.';
                       }
 
-                      const content9 = 'Nous vous remercions de votre confiance.<br/><br/>';
+                      const content9 = 'Nous vous remercions de votre confiance.';
 
-                      const content10 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
-                      const content11 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
+                      const content10 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/>';
+                      const content11 = '<a My-bakery href="https://my-bakery.fr">My-bakery</a>';
+
+                      const titles = 'Vore commande n°' + data2[0].paypal_id.replace('PAYID-', '') + '';
 
                       var mailOptions = {}
 
@@ -480,7 +486,7 @@ module.exports = {
                           from: 'My bakery <' + process.env.USER_MAILER + '>',
                           to: data2[0].firstname + ' ' + data2[0].lastname + ' <' + data2[0].email + '>',
                           subject: 'Vore commande n°' + data2[0].paypal_id.replace('PAYID-', '') + ' sur My Bakery',
-                          html: content + content2 + content3 + content4 + content5 + content5_5 + content5_5_5 + content6_6 + content6 + content7 + content8 + content8_8 + content9 + content10 + content11
+                          html: header.setOther() + body.setOrderSucces(Number(data2[0].product_id), titles, content, content2, content3, content4, content5, content5_5, content5_5_5, content6, content7, content8, content8_8, content9, content10, content11) + footer.setOther()
                         }
 
                       } else {
@@ -490,7 +496,7 @@ module.exports = {
                           from: 'My bakery <' + process.env.USER_MAILER + '>',
                           to: data2[0].firstname + ' ' + data2[0].lastname + ' <' + data2[0].email + '>',
                           subject: 'Vore commande n°' + data2[0].paypal_id.replace('PAYID-', '') + ' sur My Bakery',
-                          html: content + content2 + content3 + content4 + content5 + content6 + content7 + content8 + content9 + content10 + content11
+                          html: header.setOther() + body.setOrderSucces(Number(data2[0].product_id), titles, content, content2, content3, content4, content5, '', '', content6, content7, content8, '', content9, content10, content11) + footer.setOther()
                         }
 
                       }
@@ -678,23 +684,28 @@ module.exports = {
 
           if (data2.length >= 1) {
 
-            if (data2[0].status === 1) {
+              if (data2[0].status === 1) {
+                var update = `UPDATE orders SET status = 3 WHERE token_paiement = "${paymentId}"`
+                db.query(update, (error, data, fields) => { console.log(error); })
+              }
 
-              const content = 'Bonjour ' + data2[0].firstname + ',<br/><br>';
-              const content2 = 'Votre commande a bien été annulée !<br/><br>';
-              const content3 = 'Vous ne serez donc pas débitée.<br/><br/>';
+              const content = 'Bonjour ' + data2[0].firstname + ',';
+              const content2 = 'Votre commande a bien été annulée !';
+              const content3 = 'Vous ne serez donc pas débitée.';
 
-              const content4 = 'Nous vous remercions de votre confiance.<br/><br/>';
+              const content4 = 'Nous vous remercions de votre confiance.';
 
-              const content5 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
-              const content6 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
+              const content5 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/>';
+              const content6 = '<a style="text-decoration: none;color: #000;" href="https://my-bakery.fr">My-bakery</a>';
+
+              const titles = 'Annulation de votre commande n°' + data2[0].mobilie_id.replace('PAYID-', '') + ''
 
               // On configure notre mail à envoyer par nodemailer
               const mailOptions = {
                 from: 'My bakery <' + process.env.USER_MAILER + '>',
                 to: data2[0].firstname + ' ' + data2[0].lastname + ' <' + data2[0].email + '>',
                 subject: 'Annulation de votre commande n°' + data2[0].paypal_id.replace('PAYID-', '') + ' sur My Bakery',
-                html: content + content2 + content3 + content4 + content5 + content6
+                html: header.setOther() + body.setOrderCancel(titles, content, content2, content3, content4, content5, content6) + footer.setOther()
               }
 
               transporter.sendMail(mailOptions, (err, info) => {
@@ -714,20 +725,10 @@ module.exports = {
 
               })
 
-            } else if (data2[0].status === 3) {
-              let succes = true
-              res.json({
-                succes,
-                title: 'Paiement déjà refusé',
-                status: 3,
-                firstname: data2[0].firstname
-              })
-            }
-
-            if (data2[0].status === 1) {
-              var update = `UPDATE orders SET status = 3 WHERE token_paiement = "${paymentId}"`
-              db.query(update, (error, data, fields) => { console.log(error); })
-            }
+            let succes = true
+            res.json({
+              succes,
+            })
 
           } else {
 
@@ -806,44 +807,102 @@ module.exports = {
 
                     if (data2.length >= 1) {
 
-                      const content = 'Bonjour ' + data2[0].firstname + ',<br/><br>';
-                      const content2 = 'Votre commande a bien été annulée !<br/><br>';
-                      const content3 = 'Un remboursement sera émis d\'ici quelques jours sur votre compte bancaire, pensez à le vérifier.<br/><br/>';
+                      var application_id = data2[0].application_id
 
-                      const content4 = 'Nous vous remercions de votre confiance.<br/><br/>';
+                      const content = 'Bonjour ' + data2[0].firstname + ',<br>';
+                      const content2 = 'Votre commande a bien été annulée !<br>';
+                      const content3 = 'Un remboursement sera émis d\'ici quelques jours sur votre compte bancaire, pensez à le vérifier.';
 
-                      const content5 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/><br/><br/>';
-                      const content6 = '<a href="https://my-bakery.fr"></a>My-bakery</a>';
+                      const content4 = 'Nous vous remercions de votre confiance.';
+
+                      const content5 = '<img style="width: 90px;" width="90" src="https://my-bakery.fr/logo-light.png"/>';
+                      const content6 = '<a style="text-decoration: none;color: #000;" href="https://my-bakery.fr">My-bakery</a>';
+
+                      const titles = 'Rembourement de votre commande n°' + data2[0].paypal_id.replace('PAYID-', '') + '';
 
                       // On configure notre mail à envoyer par nodemailer
                       const mailOptions = {
                         from: 'My bakery <' + process.env.USER_MAILER + '>',
                         to: data2[0].firstname + ' ' + data2[0].lastname + ' <' + data2[0].email + '>',
                         subject: 'Rembourement de votre commande n°' + data2[0].paypal_id.replace('PAYID-', '') + ' sur My Bakery',
-                        html: content + content2 + content3 + content4 + content5 + content6
+                        html: header.setOther() + body.setOrderRefund(titles, content, content2, content3, content4, content5, content6) + footer.setOther()
                       }
 
-                      transporter.sendMail(mailOptions, (err, info) => {
+                      if (application_id !== '') {
 
-                        if (err) {
+                        let dataWonder = qs.stringify({
+                          'accessToken': process.env.WONDERPUSH_KEY,
+                          'targetInstallationIds': `${application_id}`,
+                          'notification': '{"alert":{"title": "My Bakery 🤗🥖", "text":"Bonjour ' + data2[0].firstname + ', votre commande a bien été rembourser. Nous vous remercions pour votre confiance."}}'
+                        });
 
-                          let error = true
-                          res.json({
-                            error
+                        let config = {
+                          method: 'post',
+                          maxBodyLength: Infinity,
+                          url: 'https://management-api.wonderpush.com/v1/deliveries',
+                          headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                          },
+                          data: dataWonder
+                        };
+
+                        axios.request(config)
+                          .then((response) => {
+
+                            if (response.status === 202) {
+
+                              transporter.sendMail(mailOptions, (err, info) => {
+
+                                if (err) {
+
+                                  let error = true
+                                  res.json({
+                                    error
+                                  })
+
+                                } else {
+
+                                  var update = `UPDATE orders SET status = 4, refund_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}" WHERE paypal_id = "${tokenPaiement}"`
+                                  db.query(update, (error, data, fields) => { console.log(error); })
+
+                                }
+
+                              })
+
+                            }
+
                           })
 
-                        } else {
 
-                          var update = `UPDATE orders SET status = 4, refund_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}" WHERE paypal_id = "${tokenPaiement}"`
-                          db.query(update, (error, data, fields) => { console.log(error); })
+                        res.json({
+                          succes: true,
+                        })
 
-                          res.send({
-                            succes: true,
-                          })
+                      } else {
 
-                        }
+                        transporter.sendMail(mailOptions, (err, info) => {
 
-                      })
+                          if (err) {
+
+                            let error = true
+                            res.json({
+                              error
+                            })
+
+                          } else {
+
+                            var update = `UPDATE orders SET status = 4, refund_at = "${moment().format('YYYY-MM-DD HH:mm:ss')}" WHERE paypal_id = "${tokenPaiement}"`
+                            db.query(update, (error, data, fields) => { console.log(error); })
+
+                            res.json({
+                              succes: true,
+                            })
+
+                          }
+
+                        })
+
+                      }
 
                     }
 

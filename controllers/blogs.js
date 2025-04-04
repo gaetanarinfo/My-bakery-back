@@ -17,7 +17,7 @@ module.exports = {
         blogs AS B
         LEFT JOIN blogs_categories AS BC ON BC.id = B.categorie
         WHERE B.active >= 1
-        GROUP BY B.id ORDER BY B.created_at DESC LIMIT 3`;
+        GROUP BY B.id ORDER BY B.created_at DESC LIMIT 4`;
 
         db.query(sql, (error, data, fields) => {
             if (error) console.log(error);
